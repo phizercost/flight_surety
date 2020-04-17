@@ -53,7 +53,9 @@
     "webpack-dev-server": "^3.1.4",
     "webpack-node-externals": "^1.7.2"
   },
-  "dependencies": {},
+  "dependencies": {
+    "web3": "^1.2.6"
+  },
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/phizercost/flight_surety/issues"

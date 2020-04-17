@@ -5,12 +5,13 @@ pragma solidity >=0.4.24 <0.7.0;
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./FlightSuretyData.sol";
 
 
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
-contract FlightSuretyApp {
+contract FlightSuretyApp is FlightSuretyData {
     using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
 
     /********************************************************************************************/
@@ -24,8 +25,30 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+    uint256 private constant AIRLINE_FUNDING_AMOUNT = 10 ether;
 
     address private contractOwner; // Account used to deploy contract
+    FlightSuretyData flightSuretyData;
+
+    event AirlineVoted(address airlineAddress);
+
+    struct Airline {
+        string name;
+        string code;
+        uint256 votes;
+        bool isOperational;
+        address airlineAddress;
+    }
+
+    struct Passenger {
+        string name;
+        address passengerAddress;
+    }
+
+    struct Vote {
+        address voter;
+        address airlineAddress;
+    }
 
     struct Flight {
         bool isRegistered;
@@ -34,6 +57,8 @@ contract FlightSuretyApp {
         address airline;
     }
     mapping(bytes32 => Flight) private flights;
+    mapping(address => Airline) private airlines;
+    mapping(bytes32 => bool) private votes;
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -61,6 +86,15 @@ contract FlightSuretyApp {
         _;
     }
 
+    modifier voteIsNotDuplicate(address voter, address candidate) {
+        Vote memory vote = Vote({voter: voter, airlineAddress: candidate});
+        bytes32 voteHash = keccak256(
+            abi.encodePacked(vote.voter, vote.airlineAddress)
+        );
+        require(!votes[voteHash], "This airline has already voted");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -71,14 +105,31 @@ contract FlightSuretyApp {
      */
     constructor() public {
         contractOwner = msg.sender;
+        flightSuretyData = FlightSuretyData(contractOwner);
     }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function isOperational() public pure returns (bool) {
-        return true; // Modify to call data contract's status
+    // function isOperational() public pure returns (bool) {
+    //     return true; // Modify to call data contract's status
+    // }
+
+    function getAirlineDetails(address airlineAddress)
+        public
+        view
+        onlyRegisteredAirlines(airlineAddress)
+        returns (string name, string code, uint256 votes, bool isOp, address airlAdd)
+    {
+        Airline memory airline = airlines[airlineAddress];
+        name = airline.name;
+        code = airline.code;
+        votes = airline.votes;
+        isOp = airline.isOperational;
+        airlAdd = airline.airlineAddress;
+
+        return(name, code, votes, isOp, airlAdd);
     }
 
     /********************************************************************************************/
@@ -90,12 +141,40 @@ contract FlightSuretyApp {
      *
      */
 
-    function registerAirline()
-        external
-        pure
-        returns (bool success, uint256 votes)
+    function registerAirline(
+        string airlineName,
+        string airlineCode,
+        address airlineAddressToRegister
+    ) external returns (bool success, uint256 votes) {
+        Airline memory _airline = Airline({
+            name: airlineName,
+            code: airlineCode,
+            votes: 0,
+            isOperational: false,
+            airlineAddress: airlineAddressToRegister
+        });
+
+        flightSuretyData.registerAirline(_airline.airlineAddress);
+        _airline.isOperational = true;
+        airlines[_airline.airlineAddress] = _airline;
+        return (success, _airline.votes);
+    }
+
+    function voteAirline(address airlineAddress)
+        public
+        onlyOperationalAirlines(msg.sender)
+        voteIsNotDuplicate(msg.sender, airlineAddress)
     {
-        return (success, 0);
+        Vote memory vote = Vote({
+            voter: msg.sender,
+            airlineAddress: airlineAddress
+        });
+        airlines[airlineAddress].votes = airlines[airlineAddress].votes.add(1);
+        bytes32 voteHash = keccak256(
+            abi.encodePacked(vote.voter, vote.airlineAddress)
+        );
+        votes[voteHash] = true;
+        emit AirlineVoted(airlineAddress);
     }
 
     /**
@@ -193,6 +272,7 @@ contract FlightSuretyApp {
         string flight,
         uint256 timestamp
     );
+
 
     // Register an oracle with the contract
     function registerOracle() external payable {
