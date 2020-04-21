@@ -11,7 +11,7 @@ import "./FlightSuretyData.sol";
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
-contract FlightSuretyApp is FlightSuretyData {
+contract FlightSuretyApp {
     using SafeMath for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
 
     /********************************************************************************************/
@@ -103,9 +103,9 @@ contract FlightSuretyApp is FlightSuretyData {
      * @dev Contract constructor
      *
      */
-    constructor() public {
+    constructor(address dataContractAddress) public {
         contractOwner = msg.sender;
-        flightSuretyData = FlightSuretyData(contractOwner);
+        flightSuretyData = FlightSuretyData(dataContractAddress);
     }
 
     /********************************************************************************************/
@@ -117,15 +117,15 @@ contract FlightSuretyApp is FlightSuretyData {
     // }
 
     function getAirlineDetails(address airlineAddress)
-        public
+        external
         view
-        onlyRegisteredAirlines(airlineAddress)
+        // onlyRegisteredAirlines(airlineAddress)
         returns (string name, string code, uint256 votes, bool isOp, address airlAdd)
     {
         Airline memory airline = airlines[airlineAddress];
         name = airline.name;
         code = airline.code;
-        votes = airline.votes;
+        votes = airlines[airlineAddress].votes;
         isOp = airline.isOperational;
         airlAdd = airline.airlineAddress;
 
@@ -142,40 +142,42 @@ contract FlightSuretyApp is FlightSuretyData {
      */
 
     function registerAirline(
-        string airlineName,
-        string airlineCode,
+        // string airlineName,
+        // string airlineCode,
         address airlineAddressToRegister
     ) external returns (bool success, uint256 votes) {
-        Airline memory _airline = Airline({
-            name: airlineName,
-            code: airlineCode,
-            votes: 0,
-            isOperational: false,
-            airlineAddress: airlineAddressToRegister
-        });
+        // Airline memory _airline = Airline({
+        //     name: airlineName,
+        //     code: airlineCode,
+        //     votes: 0,
+        //     isOperational: false,
+        //     airlineAddress: airlineAddressToRegister
+        // });
 
-        flightSuretyData.registerAirline(_airline.airlineAddress);
-        _airline.isOperational = true;
-        airlines[_airline.airlineAddress] = _airline;
-        return (success, _airline.votes);
+        // flightSuretyData.registerAirline(_airline.airlineAddress);
+        // _airline.isOperational = true;
+        // airlines[_airline.airlineAddress] = _airline;
+        // return (true, _airline.votes);
+        flightSuretyData.registerAirline(airlineAddressToRegister);
+        return (true, 0);
     }
 
-    function voteAirline(address airlineAddress)
-        public
-        onlyOperationalAirlines(msg.sender)
-        voteIsNotDuplicate(msg.sender, airlineAddress)
-    {
-        Vote memory vote = Vote({
-            voter: msg.sender,
-            airlineAddress: airlineAddress
-        });
-        airlines[airlineAddress].votes = airlines[airlineAddress].votes.add(1);
-        bytes32 voteHash = keccak256(
-            abi.encodePacked(vote.voter, vote.airlineAddress)
-        );
-        votes[voteHash] = true;
-        emit AirlineVoted(airlineAddress);
-    }
+    // function voteAirline(address airlineAddress)
+    //     public
+    //     onlyOperationalAirlines(msg.sender)
+    //     voteIsNotDuplicate(msg.sender, airlineAddress)
+    // {
+    //     Vote memory vote = Vote({
+    //         voter: msg.sender,
+    //         airlineAddress: airlineAddress
+    //     });
+    //     airlines[airlineAddress].votes = airlines[airlineAddress].votes.add(1);
+    //     bytes32 voteHash = keccak256(
+    //         abi.encodePacked(vote.voter, vote.airlineAddress)
+    //     );
+    //     votes[voteHash] = true;
+    //     emit AirlineVoted(airlineAddress);
+    // }
 
     /**
      * @dev Register a future flight for insuring.
