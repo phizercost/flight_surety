@@ -15,10 +15,12 @@ contract FlightSuretyData {
     address private contractOwner; // Account used to deploy contract
     bool private operational = true; // Blocks all state changes throughout the contract if false
 
+    
+
     mapping(address => bool) authorizedAppContracts;
     AirlineStates.State private fundedAirlines;
     AirlineStates.State private registeredAirlines;
-    // AirlineStates.State private operationalAirlines;
+    AirlineStates.State private operationalAirlines;
 
     uint256 private airlineFundingAmount;
 
@@ -30,8 +32,7 @@ contract FlightSuretyData {
     event ChangedAirlineFundingAmount(uint256 amount);
     event AirlineFunded(address airlineAddress);
     event AirlineRegistered(address airlineAddress);
-    // event AirlineDeRegistered(address airlineAddress);
-    // event AirlineAuthorized(address airlineAddress);
+    event AirlineAuthorized(address airlineAddress);
 
     /**
      * @dev Constructor
@@ -73,18 +74,18 @@ contract FlightSuretyData {
         _;
     }
 
-    // modifier onlyRegisteredAirlines(address airlineAddress) {
-    //     require(
-    //         registeredAirlines.has(airlineAddress),
-    //         "Airline is not registered"
-    //     );
-    //     _;
-    // }
+    modifier onlyRegisteredAirlines(address airlineAddress) {
+        require(
+            registeredAirlines.has(airlineAddress),
+            "Airline is not registered"
+        );
+        _;
+    }
 
-    // modifier onlyOperationalAirlines(address airlineAddress) {
-    //     require(operationalAirlines.has(airlineAddress), "Airline is not operational");
-    //     _;
-    // }
+    modifier onlyOperationalAirlines(address airlineAddress) {
+        require(operationalAirlines.has(airlineAddress), "Airline is not operational");
+        _;
+    }
 
     modifier paidEnough(uint256 amount) {
         require(msg.value >= amount, "Have not paid enough");
@@ -134,17 +135,10 @@ contract FlightSuretyData {
         emit AirlineRegistered(airlineAddress);
     }
 
-    // function _deRegisterAirline(address airlineAddress) internal {
-    //     registeredAirlines.removeAirlineFromState(airlineAddress);
-    //     emit AirlineDeRegistered(airlineAddress);
-    // }
-
-    // function _authorizeAirline(address airlineAddress) internal {
-    //     operationalAirlines.addAirlineToState(airlineAddress);
-    //     emit AirlineAuthorized(airlineAddress);
-    // }
-
-    
+    function _authorizeAirline(address airlineAddress) internal {
+        operationalAirlines.addAirlineToState(airlineAddress);
+        emit AirlineAuthorized(airlineAddress);
+    }
 
     /**
      * @dev Get operating status of contract
@@ -205,27 +199,16 @@ contract FlightSuretyData {
         _registerAirline(airlineAddress);
     }
 
-    // function deRegisterAirline(address airlineAddress)
-    //     external
-    //     requireIsOperational
-    //     onlyRegisteredAirlines(airlineAddress)
-    // {
-    //     _deRegisterAirline(airlineAddress);
-    // }
-
-    // function authorizeAirline(address airlineAddress)
-    //     public
-    //     requireIsOperational
-    //     onlyRegisteredAirlines(airlineAddress)
-    // {
-    //     _authorizeAirline(airlineAddress);
-    // }
-    //  function isAirlineOperational(address airlineAddress) public view returns (bool) {
-    //     return operationalAirlines.has(airlineAddress);
-    // }
-
-
-    
+    function authorizeAirline(address airlineAddress)
+        public
+        requireIsOperational
+        onlyRegisteredAirlines(airlineAddress)
+    {
+        _authorizeAirline(airlineAddress);
+    }
+     function isAirlineOperational(address airlineAddress) public view returns (bool) {
+        return operationalAirlines.has(airlineAddress);
+    }
 
     /**
      * @dev Buy insurance for a flight
@@ -250,17 +233,6 @@ contract FlightSuretyData {
      *      resulting in insurance payouts, the contract should be self-sustaining
      *
      */
-
-    // function payAirlineFunding(address airlineAddress)
-    //     public
-    //     payable
-    //     requireIsOperational
-    //     paidEnough(airlineFundingAmount)
-    //     checkValue(airlineFundingAmount)
-    // {
-    //     fundAirline(airlineAddress);
-    //     emit AirlineFunded(airlineAddress);
-    // }
 
     function fund() public payable requireIsOperational {}
 

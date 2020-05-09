@@ -19,6 +19,17 @@ contract("Flight Surety Tests", async (accounts) => {
     } catch (error) {
       console.log(error);
     }
+    //Register the first airline
+    try {
+      await config.flightSuretyApp.registerAirline("FIRST AIRLINE", "FIRST",config.firstAirline);
+    } catch (e) {}
+
+    try {
+      //Authorize the first airline
+      await config.flightSuretyData.authorizeAirline(config.firstAirline);
+    } catch (error) {
+      console.log(error);
+    }
 
     //Register first airline
     //await config.flightSuretyApp.registerAirline(config.firstAirline);
@@ -206,13 +217,20 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(airline) can register an Airline using registerAirline() if it is funded", async () => {
     // ARRANGE
+    let newAirline = accounts[4];
+    try {
+      await config.flightSuretyData.fundAirline(newAirline, {
+        from: newAirline,
+        value: web3.utils.toWei("10", "ether"),
+      });
+    } catch (e) {}
 
     // ACT
     try {
-      await config.flightSuretyApp.registerAirline(config.firstAirline);
+      await config.flightSuretyApp.registerAirline("COSTAIR","COST",newAirline);
     } catch (e) {}
     let result = await config.flightSuretyData.isAirline.call(
-      config.firstAirline
+      newAirline
     );
 
     // ASSERT
@@ -223,44 +241,59 @@ contract("Flight Surety Tests", async (accounts) => {
     );
   });
 
-  // it("(airline can fund the airline with an amount equal to the required", async () => {
+
+  it("(airline) can get details of a registered airlines", async () => {
+    // ARRANGE
+    let newAirline = accounts[5];
+    let result;
+    try {
+      await config.flightSuretyData.fundAirline(newAirline, {
+        from: newAirline,
+        value: web3.utils.toWei("10", "ether"),
+      });
+    } catch (e) {}
+
+    // ACT
+    try {
+      let result = await config.flightSuretyApp.registerAirline("RWANDAIR","RW",newAirline);
+    } catch (e) {
+      console.log(e)
+    }
+    try {
+       result = await config.flightSuretyApp.getAirlineDetails(
+        newAirline
+      );
+    } catch (error) {
+      console.log(error)
+    }
+
+    // ASSERT
+    assert.equal(
+      result.name,
+      "RWANDAIR",
+      "Should be able to get the airline details"
+    );
+  });
+
+
+  // it("(airline) cannot vote if it is not an authorized airline", async () => {
   //   // ARRANGE
-  //   let newAirline = accounts[2];
-  //   let ether = await config.flightSuretyData.getAirlineFundingAmount();
-  //   // ACT
+  //   let votingAirline = accounts[2];
+  //   let candidateAirline = accounts[3];
+  //   //ACT
   //   try {
-  //     await config.flightSuretyData.payAirlineFunding(newAirline, {
-  //       from: newAirline, value: web3.utils.toWei("10", 'ether')
+  //     await config.flightSuretyApp.voteAirline(candidateAirline, {
+  //       from: votingAirline,
   //     });
-  //   } catch (e) {
-  //     console.error(e);
-  //   }
-  //   let result = await config.flightSuretyData.isFunded.call(newAirline);
-  //   // ASSERT
-  //   assert.equal(
-  //     result,
-  //     true,
-  //     "Airline funding is equal to the required funding amount"
-  //   );
-  // });
-
-  // it("(airline) can register an Airline using registerAirline()", async () => {
-  //   // ARRANGE
-  //   let newAirline = accounts[2];
-
-  //   // ACT
-  //   try {
-  //     await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
   //   } catch (e) {}
-  //   let result = await config.flightSuretyData.isAirline.call(newAirline);
-
-  //   // ASSERT
+  //     let votes = await config.flightSuretyApp.getAirlineDetails.call(candidateAirline);
   //   assert.equal(
-  //     result,
-  //     false,
-  //     "Airline should not be able to register another airline if it hasn't provided funding"
-  //   );
+  //     votes.votes,
+  //     0,"Cannot vote if not authorized"
+  //   )
+
   // });
+
 
   // it("airline cannot authorize airline which is not funded", async () => {
   //   try {
@@ -283,22 +316,7 @@ contract("Flight Surety Tests", async (accounts) => {
   //   assert.equal(isAuthorized, true, "Airline can be authorized only if it has paid registration fees");
   // });
 
-  // it("(airline) cannot vote if it is not an authorized airline", async () => {
-  //   // ARRANGE
-  //   let newAirlineCandidate = accounts[2];
-  //   //ACT
-  //   try {
-  //     await config.flightSuretyApp.voteAirline(newAirlineCandidate, {
-  //       from: config.firstAirline,
-  //     });
-  //   } catch (e) {}
-  //     let votes = await config.flightSuretyApp.getAirlineDetails.call(newAirlineCandidate, {from: config.firstAirline});
-  //   assert.equal(
-  //     votes.votes,
-  //     0,"Cannot vote if not authorized"
-  //   )
-
-  // });
+  
 
   // it("(owner) cannot change the airline registration fees by someone who is not the owner", async () => {
   //   // ARRANGE
