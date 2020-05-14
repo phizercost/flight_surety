@@ -415,64 +415,162 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(result, true, "airline is authorized");
   });
 
-  // it("airline cannot authorize airline which is not funded", async () => {
-  //   try {
-  //     await config.flightSuretyData.authorizeAirline(config.firstAirline);
-  //   } catch (error) {
-  //   }
-  //   let isAuthorized = await config.flightSuretyData.isAirlineOperational.call(config.firstAirline);
-  //   assert.equal(isAuthorized, false, "Airline can be authorized only if it has paid registration fees");
-  // });
+  it("(airline) cannot register flight if airline is not authorized", async () => {
+    // ARRANGE
+    let airline = accounts[6];
+    let flight = "COST003";
+    let timestamp = 10;
+    //ACT
+    try {
+      await config.flightSuretyApp.registerFlight(flight, timestamp,{from:airline});
+    } catch (e) {}
 
-  // it("airline can authorize airline which is funded", async () => {
-  //   try {
-  //     await config.flightSuretyData.payAirlineFunding(config.firstAirline, {
-  //       from: config.firstAirline, value: web3.utils.toWei("10", 'ether')
-  //     });
-  //     await config.flightSuretyData.authorizeAirline(config.firstAirline);
-  //   } catch (error) {
-  //   }
-  //   let isAuthorized = await config.flightSuretyData.isAirlineOperational.call(config.firstAirline);
-  //   assert.equal(isAuthorized, true, "Airline can be authorized only if it has paid registration fees");
-  // });
+    let status;
+    try {
+      status = await config.flightSuretyData.isFlightRegistered(airline,flight,timestamp);
+    } catch (error) {}
+    assert.equal(status, false, "Cannot register flight if the airline is not authorized");
+  });
 
-  // it("(owner) cannot change the airline registration fees by someone who is not the owner", async () => {
-  //   // ARRANGE
-  //   let newFeesAmount = "15";
+  it("(airline) can register flight if airline is authorized", async () => {
+    // ARRANGE
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    //ACT
+    try {
+      await config.flightSuretyApp.registerFlight(flight, timestamp,{from:airline});
+    } catch (e) {}
 
-  //   // ACT
-  //   try {
-  //     await config.flightSuretyData.changeAirlineFundingAmount(web3.utils.toWei(newFeesAmount, 'ether'), {
-  //       from: config.firstAirline,
-  //     });
-  //   } catch (e) {}
-  //   let result = web3.utils.fromWei(await config.flightSuretyData.getAirlineFundingAmount(), 'ether');
+    let status;
+    try {
+      status = await config.flightSuretyData.isFlightRegistered(airline,flight,timestamp);
+    } catch (error) {}
+    assert.equal(status, true, "Can register flight if the airline is authorized");
+  });
 
-  //   // ASSERT
-  //   assert.equal(
-  //     result,
-  //     "10",
-  //     "Registration fees is equal to the previous value"
-  //   );
-  // })
+  it("(airline) can update flight status code", async () => {
+    // ARRANGE
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    let statusCode = 100;
+    //ACT
+    try {
+      await config.flightSuretyData.updateFlightStatus(flight,timestamp, statusCode, airline);
+    } catch (e) {
+     
+    }
 
-  // it("(owner) can change the airline registration fees", async () => {
-  //   // ARRANGE
-  //   let newFeesAmount = "15";
+    let status;
+    try { 
+      status = (await config.flightSuretyData.fetchFlightStatus(flight,timestamp, airline)).toNumber();
+    } catch (error) {
+    }
+    assert.equal(status, 100, "Can update flight status code");
+  });
 
-  //   // ACT
-  //   try {
-  //     await config.flightSuretyData.changeAirlineFundingAmount(web3.utils.toWei(newFeesAmount, 'ether'), {
-  //       from: config.owner,
-  //     });
-  //   } catch (e) {}
-  //   let result = web3.utils.fromWei(await config.flightSuretyData.getAirlineFundingAmount(), 'ether');
+  it("(passenger) cannot buy insurance for a non registered flight", async () => {
+    // ARRANGE
+    let passenger = accounts[6]
+    let airline = config.firstAirline;
+    let flight = "COST002";
+    let timestamp = 1;
+    //ACT
+    try {
+      await config.flightSuretyApp.buy(airline, flight, timestamp, {
+        from: passenger,
+        value: web3.utils.toWei("1", "ether")}
+      );
+    } catch (e) {
+    }
 
-  //   // ASSERT
-  //   assert.equal(
-  //     newFeesAmount,
-  //     result,
-  //     "Registration fees is equal to the new value"
-  //   );
-  // });
+    let status;
+    try {
+      status = 
+        await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+    } catch (error) {
+    }
+    assert.equal(status, false, "Cannot buy insurance from an authorized airline");
+  });
+
+  it("(passenger) cannot buy insurance with amount greater than 1 Ether", async () => {
+    // ARRANGE
+    let passenger = accounts[6]
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    //ACT
+    try {
+      await config.flightSuretyApp.buy(airline, flight, timestamp, {
+        from: passenger,
+        value: web3.utils.toWei("2", "ether")}
+      );
+    } catch (e) {}
+
+    let status;
+    try {
+      status = 
+      await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+    } catch (error) {}
+    assert.equal(status, false, "Cannot buy insurance with amount greater than 1 Ether");
+  });
+
+  it("(passenger) cannot buy insurance with amount less or equal to 0 Ether", async () => {
+    // ARRANGE
+    let passenger = accounts[6]
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    //ACT
+    try {
+      await config.flightSuretyApp.buy(airline, flight, timestamp, {
+        from: passenger,
+        value: web3.utils.toWei("0", "ether")}
+      );
+    } catch (e) {}
+
+    let status;
+    try {
+      status = 
+      await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+    } catch (error) {}
+    assert.equal(status, false, "Cannot buy insurance with amount less or equal to 0 Ether");
+  });
+
+  it("(passenger) can buy insurance", async () => {
+    // ARRANGE
+    let passenger = accounts[6]
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    //ACT
+    try {
+      await config.flightSuretyApp.buy(airline, flight, timestamp, {
+        from: passenger,
+        value: web3.utils.toWei("0.5", "ether")}
+      );
+    } catch (e) {}
+
+    let status;
+    try {
+      status = 
+        await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+    } catch (error) {}
+    assert.equal(status, true, "Can buy insurance");
+  });
+
+  it("(passenger) can get the passenger paid insurance amount", async () => {
+    // ARRANGE
+    let passenger = accounts[6];
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    //ACT
+    let amount;
+    try {
+      amount = web3.utils.fromWei(await config.flightSuretyData.getPassengerInsuranceAmount(passenger, airline, flight, timestamp));
+    } catch (e) {}
+    assert.equal(amount, 0.5, "Can get the passenger insurance amount");
+  });
 });

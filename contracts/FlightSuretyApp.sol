@@ -30,22 +30,6 @@ contract FlightSuretyApp is FlightSuretyData {
     address private contractOwner; // Account used to deploy contract
     FlightSuretyData flightSuretyData;
 
-    
-
-    struct Passenger {
-        string name;
-        address passengerAddress;
-    }
-
-    struct Flight {
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;
-        address airline;
-    }
-    mapping(bytes32 => Flight) private flights;
-    
-
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -93,6 +77,8 @@ contract FlightSuretyApp is FlightSuretyData {
     //     return true; // Modify to call data contract's status
     // }
 
+    
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -107,7 +93,23 @@ contract FlightSuretyApp is FlightSuretyData {
      *
      */
 
-    function registerFlight() external pure {}
+    function registerFlight(string flight, uint256 timestamp) external  {
+        flightSuretyData.registerFlight(msg.sender, flight, timestamp);
+        emit FlightRegistered(msg.sender, flight, timestamp);
+    }
+    /**
+     * @dev Buy insurance for a flight
+     *
+     */
+
+    function buy(address airlineAddress,string flight, uint256 timestamp) external payable {
+        require(flightSuretyData.isAirlineAuthorized(airlineAddress), "You can only buy insurance from an authorized airline");
+        require(flightSuretyData.isFlightRegistered(airlineAddress,flight,timestamp),"The flight must be registered");
+        require(msg.value > 0 ether && msg.value <= 1 ether, "Insurance amount should be between 0 and 1 Ether");
+        //insurances[msg.sender] = Insurance({ insuredPassenger:msg.sender, amount:msg.value});
+        flightSuretyData.registerFunds(msg.sender, airlineAddress,flight, timestamp, msg.value);
+        emit BoughtInsurance(msg.sender, airlineAddress, msg.value);
+    }
 
     /**
      * @dev Called after oracle has updated flight status
@@ -187,6 +189,8 @@ contract FlightSuretyApp is FlightSuretyData {
         uint256 timestamp,
         uint8 status
     );
+    event BoughtInsurance(address passenger, address airline, uint amount);
+    event FlightRegistered(address airlineAddress, string flight, uint departureTimestamp);
 
     // Event fired when flight status request is submitted
     // Oracles track this and if they have a matching index

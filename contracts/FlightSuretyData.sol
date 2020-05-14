@@ -16,6 +16,7 @@ contract FlightSuretyData {
         string name;
         string code;
         uint256 votes;
+        uint256 funds;
         address airlineAddress;
     }
 
@@ -24,11 +25,21 @@ contract FlightSuretyData {
         address airlineAddress;
     }
 
+    struct Flight {
+        bool isRegistered;
+        uint8 statusCode;
+        uint256 updatedTimestamp;
+        address airline;
+    }
+
+
     address private contractOwner; // Account used to deploy contract
     bool private operational = true; // Blocks all state changes throughout the contract if false
     mapping(address => bool) authorizedAppContracts;
     mapping(address => Airline) private airlines;
     mapping(bytes32 => bool) private votes;
+    mapping(bytes32 => Flight) private flights;
+    mapping(bytes32 => mapping(address => uint256)) private insurances;
     address[] authorizedAirlinesArray = new address[](0);
     AirlineStates.State private fundedAirlines;
     AirlineStates.State private registeredAirlines;
@@ -112,6 +123,15 @@ contract FlightSuretyData {
         _;
     }
 
+    modifier onlyFlightOwner(address airline, string flight, uint256 timestamp) {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        require(
+            flights[flightKey].airline == airline,
+            "Only flight owner is allowed to do this"
+        );
+        _;
+    }
+
     modifier paidEnough(uint256 amount) {
         require(msg.value >= amount, "Have not paid enough");
         _;
@@ -183,6 +203,31 @@ contract FlightSuretyData {
 
     function getAirlineFundingAmount() external view returns (uint256) {
         return airlineFundingAmount;
+    }
+
+    function registerFunds(
+        address passengerAddress,
+        address airlineAddress, string flight, uint256 timestamp,
+        uint256 amount
+    ) external {
+        uint256 funds = airlines[airlineAddress].funds;
+        airlines[airlineAddress].funds = funds.add(amount);
+        bytes32 flightKey = getFlightKey(airlineAddress,flight,timestamp);
+        insurances[flightKey][passengerAddress] = amount;
+    }
+
+    function getPassengerInsuranceAmount(
+        address passengerAddress,
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) public view returns (uint256) {
+        if (!isPassengerInsured(passengerAddress, airline, flight, timestamp)) {
+            return 0;
+        } else {
+            bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+            return insurances[flightKey][passengerAddress];
+        }
     }
 
     /**
@@ -269,6 +314,7 @@ contract FlightSuretyData {
             name: airlineName,
             code: airlineCode,
             votes: 0,
+            funds: 0,
             airlineAddress: airlineToRegister
         });
 
@@ -286,11 +332,16 @@ contract FlightSuretyData {
             getAuthorizedAirlineCount() < 4,
             "Register another airline only if there is less than 4 authorized airlines"
         );
-        require(isAirlineAuthorized(airlineRegistering) || getAuthorizedAirlineCount()==0, "Only authorized airlines or first ever airline");
+        require(
+            isAirlineAuthorized(airlineRegistering) ||
+                getAuthorizedAirlineCount() == 0,
+            "Only authorized airlines or first ever airline"
+        );
         Airline memory _airline = Airline({
             name: airlineName,
             code: airlineCode,
             votes: 0,
+            funds: 0,
             airlineAddress: airlineToRegister
         });
 
@@ -331,15 +382,22 @@ contract FlightSuretyData {
         public
         view
         onlyRegisteredAirlines(airlineAddress)
-        returns (string name, string code, uint256 voteCount, address airlAdd)
+        returns (
+            string name,
+            string code,
+            uint256 voteCount,
+            uint256 funds,
+            address airlAdd
+        )
     {
         Airline memory airline = airlines[airlineAddress];
         name = airline.name;
         code = airline.code;
         voteCount = airline.votes;
+        funds = airline.funds;
         airlAdd = airline.airlineAddress;
 
-        return (name, code, voteCount, airlAdd);
+        return (name, code, voteCount, funds, airlAdd);
     }
 
     function authorizeAirline(address airlineAddress)
@@ -358,12 +416,63 @@ contract FlightSuretyData {
         return authorizedAirlines.has(airlineAddress);
     }
 
-    /**
-     * @dev Buy insurance for a flight
-     *
-     */
+    function isPassengerInsured(address passengerAddress,address airline,
+        string flight,
+        uint256 timestamp)
+        public
+        view
+        returns (bool)
+    {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        uint256 amount = insurances[flightKey][passengerAddress];
+        if(amount == 0){
+            return false;
+        }else {
+            return true;
+        }
+    }
 
-    function buy() external payable {}
+    function registerFlight(address airline, string flight, uint256 timestamp)
+        external
+        requireIsOperational
+        onlyAuthorizedAirlines(airline)
+    {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        flights[flightKey].isRegistered = true;
+        flights[flightKey].updatedTimestamp = timestamp;
+        flights[flightKey].airline = airline;
+    }
+
+    function isFlightRegistered(
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) public view returns (bool) {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        if (flights[flightKey].isRegistered) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function updateFlightStatus(
+        string flight,
+        uint256 timestamp,
+        uint8 statusCode,
+        address airline
+    ) external requireIsOperational {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        flights[flightKey].statusCode = statusCode;
+    }
+
+    function fetchFlightStatus(string flight,
+        uint256 timestamp,
+        address airline) public view returns(uint256){
+            require(isFlightRegistered(airline, flight, timestamp), "The flight should exist before getting its status");
+            bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+            return flights[flightKey].statusCode;
+        }
 
     /**
      *  @dev Credits payouts to insurees
