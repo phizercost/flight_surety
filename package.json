@@ -54,7 +54,7 @@
     "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
-    "web3": "^1.2.6"
+    "web3": "^1.2.2"
   },
   "license": "ISC",
   "bugs": {
