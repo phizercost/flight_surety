@@ -4,16 +4,17 @@ var Test = require("../config/testConfig.js");
 contract("Oracles", async (accounts) => {
   const TEST_ORACLES_COUNT = 20;
   var config;
-  before("setup contract", async () => {
-    config = await Test.Config(accounts);
-
-    // Watch contract events
-    const STATUS_CODE_UNKNOWN = 0;
+  const STATUS_CODE_UNKNOWN = 0;
     const STATUS_CODE_ON_TIME = 10;
     const STATUS_CODE_LATE_AIRLINE = 20;
     const STATUS_CODE_LATE_WEATHER = 30;
     const STATUS_CODE_LATE_TECHNICAL = 40;
     const STATUS_CODE_LATE_OTHER = 50;
+  before("setup contract", async () => {
+    config = await Test.Config(accounts);
+
+    // Watch contract events
+    
   });
 
   it("can register oracles", async () => {
@@ -38,14 +39,16 @@ contract("Oracles", async (accounts) => {
   it("can request flight status", async () => {
     // ARRANGE
     let flight = "ND1309"; // Course number
-    let timestamp = Math.floor(Date.now() / 1000);
-
+    let timestamp = 1;//Math.floor(Date.now() / 1000);
+    console.log(timestamp);
     // Submit a request for oracles to get status information for a flight
-    await config.flightSuretyApp.fetchFlightStatus(
+    try{await config.flightSuretyApp.fetchFlightStatus(
       config.firstAirline,
       flight,
       timestamp
-    );
+    );}catch(e){
+      console.log(e)
+    }
 
     // ACT
 

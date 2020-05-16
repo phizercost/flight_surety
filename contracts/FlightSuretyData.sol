@@ -1,6 +1,7 @@
 pragma solidity >=0.4.24 <0.7.0;
 
-import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+//mport "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/@openzeppelin/contracts/math/SafeMath.sol";
 import "./../libraries/States.sol";
 
 
@@ -466,7 +467,7 @@ contract FlightSuretyData {
         flights[flightKey].statusCode = statusCode;
     }
 
-    function fetchFlightStatus(string flight,
+    function fetchFlightStatus(string memory flight,
         uint256 timestamp,
         address airline) public view returns(uint256){
             require(isFlightRegistered(airline, flight, timestamp), "The flight should exist before getting its status");

@@ -573,4 +573,15 @@ contract("Flight Surety Tests", async (accounts) => {
     } catch (e) {}
     assert.equal(amount, 0.5, "Can get the passenger insurance amount");
   });
+
+  // it("(test) can get random index", async () => {
+  //   try {
+  //     console.log(accounts[0]);
+  //     await config.flightSuretyApp.fetchFlightStatus(accounts[0], "002", 10);
+  //     //console.log(number);
+  //   } catch (error) {
+  //     console.log(error)
+  //   }
+    
+  // })
 });

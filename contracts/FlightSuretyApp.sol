@@ -4,7 +4,8 @@ pragma solidity >=0.4.24 <0.7.0;
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
-import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+//import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/@openzeppelin/contracts/math/SafeMath.sol";
 import "./FlightSuretyData.sol";
 
 
@@ -124,21 +125,23 @@ contract FlightSuretyApp is FlightSuretyData {
     ) internal pure {}
 
     // Generate a request for oracles to fetch flight information
-    function fetchFlightStatus(
-        address airline,
-        string flight,
-        uint256 timestamp
-    ) external {
+    function fetchFlightStatus
+                        (
+                            address airline,
+                            string flight,
+                            uint256 timestamp
+                        )
+                        external
+                        requireIsOperational()
+    {
         uint8 index = getRandomIndex(msg.sender);
 
         // Generate a unique key for storing the request
-        bytes32 key = keccak256(
-            abi.encodePacked(index, airline, flight, timestamp)
-        );
+        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         oracleResponses[key] = ResponseInfo({
-            requester: msg.sender,
-            isOpen: true
-        });
+                                                requester: msg.sender,
+                                                isOpen: true
+                                            });
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
