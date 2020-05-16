@@ -39,7 +39,7 @@ contract("Oracles", async (accounts) => {
   it("can request flight status", async () => {
     // ARRANGE
     let flight = "ND1309"; // Course number
-    let timestamp = 1;//Math.floor(Date.now() / 1000);
+    let timestamp = Math.floor(Date.now() / 1000);
     console.log(timestamp);
     // Submit a request for oracles to get status information for a flight
     try{await config.flightSuretyApp.fetchFlightStatus(
