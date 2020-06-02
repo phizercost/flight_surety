@@ -77,7 +77,19 @@ contract FlightSuretyApp is FlightSuretyData {
     //     return true; // Modify to call data contract's status
     // }
 
-    
+    function isFlightRegistered(
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) public view returns (bool) {
+        bytes32 flightKey = flightSuretyData.getFlightKey(
+            airline,
+            flight,
+            timestamp
+        );
+        bool status = flightSuretyData.isFlightRegistered(flightKey);
+        return status;
+    }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -93,22 +105,74 @@ contract FlightSuretyApp is FlightSuretyData {
      *
      */
 
-    function registerFlight(string flight, uint256 timestamp) external  {
-        flightSuretyData.registerFlight(msg.sender, flight, timestamp);
+    function registerFlight(string flight, uint256 timestamp) external {
+        bytes32 flightKey = flightSuretyData.getFlightKey(
+            msg.sender,
+            flight,
+            timestamp
+        );
+        flightSuretyData.registerFlight(
+            msg.sender,
+            flight,
+            timestamp,
+            flightKey
+        );
         emit FlightRegistered(msg.sender, flight, timestamp);
     }
+
     /**
      * @dev Buy insurance for a flight
      *
      */
 
-    function buy(address airlineAddress,string flight, uint256 timestamp) external payable {
-        require(flightSuretyData.isAirlineAuthorized(airlineAddress), "You can only buy insurance from an authorized airline");
-        require(flightSuretyData.isFlightRegistered(airlineAddress,flight,timestamp),"The flight must be registered");
-        require(msg.value > 0 ether && msg.value <= 1 ether, "Insurance amount should be between 0 and 1 Ether");
+    function buy(
+        address airlineAddress,
+        string flight,
+        uint256 timestamp
+    ) external payable {
+        bytes32 flightKey = flightSuretyData.getFlightKey(
+            airlineAddress,
+            flight,
+            timestamp
+        );
+        require(
+            flightSuretyData.isAirlineAuthorized(airlineAddress),
+            "You can only buy insurance from an authorized airline"
+        );
+        require(
+            flightSuretyData.isFlightRegistered(flightKey),
+            "The flight must be registered"
+        );
+        require(
+            msg.value > 0 ether && msg.value <= 1 ether,
+            "Insurance amount should be between 0 and 1 Ether"
+        );
         //insurances[msg.sender] = Insurance({ insuredPassenger:msg.sender, amount:msg.value});
-        flightSuretyData.registerFunds(msg.sender, airlineAddress,flight, timestamp, msg.value);
+        flightSuretyData.registerFunds(
+            msg.sender,
+            airlineAddress,
+            flightKey,
+            msg.value
+        );
         emit BoughtInsurance(msg.sender, airlineAddress, msg.value);
+    }
+
+    function getPassengerInsuranceAmount(
+        address passenger,
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) external view returns (uint256) {
+        bytes32 flightKey = flightSuretyData.getFlightKey(
+            airline,
+            flight,
+            timestamp
+        );
+        uint256 amount = flightSuretyData.getPassengerInsuranceAmount(
+            passenger,
+            flightKey
+        );
+        return amount;
     }
 
     /**
@@ -121,7 +185,14 @@ contract FlightSuretyApp is FlightSuretyData {
         string memory flight,
         uint256 timestamp,
         uint8 statusCode
-    ) internal pure {}
+    ) internal {
+        bytes32 flightKey = flightSuretyData.getFlightKey(
+            airline,
+            flight,
+            timestamp
+        );
+        flightSuretyData.updateFlightStatus(statusCode, flightKey);
+    }
 
     // Generate a request for oracles to fetch flight information
     function fetchFlightStatus(
@@ -139,6 +210,12 @@ contract FlightSuretyApp is FlightSuretyData {
             requester: msg.sender,
             isOpen: true
         });
+        bytes32 flightKey = flightSuretyData.getFlightKey(
+            airline,
+            flight,
+            timestamp
+        );
+        flightSuretyData.creditInsurees(flightKey);
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
@@ -189,8 +266,12 @@ contract FlightSuretyApp is FlightSuretyData {
         uint256 timestamp,
         uint8 status
     );
-    event BoughtInsurance(address passenger, address airline, uint amount);
-    event FlightRegistered(address airlineAddress, string flight, uint departureTimestamp);
+    event BoughtInsurance(address passenger, address airline, uint256 amount);
+    event FlightRegistered(
+        address airlineAddress,
+        string flight,
+        uint256 departureTimestamp
+    );
 
     // Event fired when flight status request is submitted
     // Oracles track this and if they have a matching index
@@ -201,7 +282,6 @@ contract FlightSuretyApp is FlightSuretyData {
         string flight,
         uint256 timestamp
     );
-
 
     // Register an oracle with the contract
     function registerOracle() external payable {
@@ -263,11 +343,11 @@ contract FlightSuretyApp is FlightSuretyData {
         }
     }
 
-    function getFlightKey(address airline, string flight, uint256 timestamp)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function getFlightKey(
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 

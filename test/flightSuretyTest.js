@@ -4,6 +4,14 @@ require("web3");
 
 contract("Flight Surety Tests", async (accounts) => {
   var config;
+
+  const TEST_ORACLES_COUNT = 20;
+  const STATUS_CODE_UNKNOWN = 0;
+  const STATUS_CODE_ON_TIME = 10;
+  const STATUS_CODE_LATE_AIRLINE = 20;
+  const STATUS_CODE_LATE_WEATHER = 30;
+  const STATUS_CODE_LATE_TECHNICAL = 40;
+  const STATUS_CODE_LATE_OTHER = 50;
   before("setup contract", async () => {
     config = await Test.Config(accounts);
     await config.flightSuretyData.authorizeCaller(
@@ -22,7 +30,8 @@ contract("Flight Surety Tests", async (accounts) => {
       await config.flightSuretyData.registerAirline(
         config.firstAirline,
         "FIRST",
-        "FIRST AIRLINE",config.firstAirline
+        "FIRST AIRLINE",
+        config.firstAirline
       );
     } catch (e) {}
 
@@ -213,7 +222,8 @@ contract("Flight Surety Tests", async (accounts) => {
       await config.flightSuretyData.registerAirline(
         newAirline,
         "COST",
-        "COSTAIR",config.firstAirline
+        "COSTAIR",
+        config.firstAirline
       );
     } catch (e) {
       console.log(e);
@@ -314,7 +324,8 @@ contract("Flight Surety Tests", async (accounts) => {
       await config.flightSuretyData.registerAirline(
         newAirline1,
         "COST1",
-        "COSTAIR1",registeringAccount1
+        "COSTAIR1",
+        registeringAccount1
       );
     } catch (e) {
       console.log(e);
@@ -324,7 +335,8 @@ contract("Flight Surety Tests", async (accounts) => {
       await config.flightSuretyData.registerAirline(
         newAirline2,
         "COST2",
-        "COSTAIR2",registeringAccount1
+        "COSTAIR2",
+        registeringAccount1
       );
     } catch (e) {
       console.log(e);
@@ -336,8 +348,7 @@ contract("Flight Surety Tests", async (accounts) => {
         "COST3",
         "COSTAIR3"
       );
-    } catch (e) {
-    }
+    } catch (e) {}
 
     try {
       await config.flightSuretyData.fundAirline(newAirline1, {
@@ -371,7 +382,6 @@ contract("Flight Surety Tests", async (accounts) => {
       result3 = await config.flightSuretyData.isAirlineAuthorized(newAirline3);
     } catch (error) {}
 
-
     assert.equal(result1, true, "airline1 is authorized");
     assert.equal(result2, true, "airline2 is authorized");
     assert.equal(result3, false, "airline3 is not authorized");
@@ -389,25 +399,18 @@ contract("Flight Surety Tests", async (accounts) => {
         "COST3",
         "COSTAIR3"
       );
-    } catch (e) {
-    }
+    } catch (e) {}
     try {
       result = await config.flightSuretyData.isAirlineAuthorized(newAirline);
     } catch (error) {}
     assert.equal(result, false, "airline is not authorized");
 
     try {
-      await config.flightSuretyData.voteAirline(
-        votingAirline1,
-        newAirline
-      );
+      await config.flightSuretyData.voteAirline(votingAirline1, newAirline);
     } catch (e) {}
 
     try {
-      await config.flightSuretyData.voteAirline(
-        votingAirline2,
-        newAirline
-      );
+      await config.flightSuretyData.voteAirline(votingAirline2, newAirline);
     } catch (e) {}
     try {
       result = await config.flightSuretyData.isAirlineAuthorized(newAirline);
@@ -422,14 +425,24 @@ contract("Flight Surety Tests", async (accounts) => {
     let timestamp = 10;
     //ACT
     try {
-      await config.flightSuretyApp.registerFlight(flight, timestamp,{from:airline});
+      await config.flightSuretyApp.registerFlight(flight, timestamp, {
+        from: airline,
+      });
     } catch (e) {}
 
     let status;
     try {
-      status = await config.flightSuretyData.isFlightRegistered(airline,flight,timestamp);
+      status = await config.flightSuretyApp.isFlightRegistered(
+        airline,
+        flight,
+        timestamp
+      );
     } catch (error) {}
-    assert.equal(status, false, "Cannot register flight if the airline is not authorized");
+    assert.equal(
+      status,
+      false,
+      "Cannot register flight if the airline is not authorized"
+    );
   });
 
   it("(airline) can register flight if airline is authorized", async () => {
@@ -439,14 +452,24 @@ contract("Flight Surety Tests", async (accounts) => {
     let timestamp = 10;
     //ACT
     try {
-      await config.flightSuretyApp.registerFlight(flight, timestamp,{from:airline});
+      await config.flightSuretyApp.registerFlight(flight, timestamp, {
+        from: airline,
+      });
     } catch (e) {}
 
     let status;
     try {
-      status = await config.flightSuretyData.isFlightRegistered(airline,flight,timestamp);
+      status = await config.flightSuretyApp.isFlightRegistered(
+        airline,
+        flight,
+        timestamp
+      );
     } catch (error) {}
-    assert.equal(status, true, "Can register flight if the airline is authorized");
+    assert.equal(
+      status,
+      true,
+      "Can register flight if the airline is authorized"
+    );
   });
 
   it("(airline) can update flight status code", async () => {
@@ -457,22 +480,30 @@ contract("Flight Surety Tests", async (accounts) => {
     let statusCode = 100;
     //ACT
     try {
-      await config.flightSuretyData.updateFlightStatus(flight,timestamp, statusCode, airline);
-    } catch (e) {
-     
-    }
+      await config.flightSuretyData.updateFlightStatus(
+        flight,
+        timestamp,
+        statusCode,
+        airline
+      );
+    } catch (e) {}
 
     let status;
-    try { 
-      status = (await config.flightSuretyData.fetchFlightStatus(flight,timestamp, airline)).toNumber();
-    } catch (error) {
-    }
-    assert.equal(status, 100, "Can update flight status code");
+    try {
+      status = (
+        await config.flightSuretyData.fetchFlightStatus(
+          flight,
+          timestamp,
+          airline
+        )
+      ).toNumber();
+    } catch (error) {}
+    assert.equal(status, 100, "Cannot update flight status code");
   });
 
   it("(passenger) cannot buy insurance for a non registered flight", async () => {
     // ARRANGE
-    let passenger = accounts[6]
+    let passenger = accounts[6];
     let airline = config.firstAirline;
     let flight = "COST002";
     let timestamp = 1;
@@ -480,23 +511,29 @@ contract("Flight Surety Tests", async (accounts) => {
     try {
       await config.flightSuretyApp.buy(airline, flight, timestamp, {
         from: passenger,
-        value: web3.utils.toWei("1", "ether")}
-      );
-    } catch (e) {
-    }
+        value: web3.utils.toWei("1", "ether"),
+      });
+    } catch (e) {}
 
     let status;
     try {
-      status = 
-        await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
-    } catch (error) {
-    }
-    assert.equal(status, false, "Cannot buy insurance from an authorized airline");
+      status = await config.flightSuretyData.isPassengerInsured(
+        passenger,
+        airline,
+        flight,
+        timestamp
+      );
+    } catch (error) {}
+    assert.equal(
+      status,
+      false,
+      "Cannot buy insurance from an authorized airline"
+    );
   });
 
   it("(passenger) cannot buy insurance with amount greater than 1 Ether", async () => {
     // ARRANGE
-    let passenger = accounts[6]
+    let passenger = accounts[6];
     let airline = config.firstAirline;
     let flight = "COST003";
     let timestamp = 10;
@@ -504,21 +541,29 @@ contract("Flight Surety Tests", async (accounts) => {
     try {
       await config.flightSuretyApp.buy(airline, flight, timestamp, {
         from: passenger,
-        value: web3.utils.toWei("2", "ether")}
-      );
+        value: web3.utils.toWei("2", "ether"),
+      });
     } catch (e) {}
 
     let status;
     try {
-      status = 
-      await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+      status = await config.flightSuretyData.isPassengerInsured(
+        passenger,
+        airline,
+        flight,
+        timestamp
+      );
     } catch (error) {}
-    assert.equal(status, false, "Cannot buy insurance with amount greater than 1 Ether");
+    assert.equal(
+      status,
+      false,
+      "Cannot buy insurance with amount greater than 1 Ether"
+    );
   });
 
   it("(passenger) cannot buy insurance with amount less or equal to 0 Ether", async () => {
     // ARRANGE
-    let passenger = accounts[6]
+    let passenger = accounts[6];
     let airline = config.firstAirline;
     let flight = "COST003";
     let timestamp = 10;
@@ -526,21 +571,29 @@ contract("Flight Surety Tests", async (accounts) => {
     try {
       await config.flightSuretyApp.buy(airline, flight, timestamp, {
         from: passenger,
-        value: web3.utils.toWei("0", "ether")}
-      );
+        value: web3.utils.toWei("0", "ether"),
+      });
     } catch (e) {}
 
     let status;
     try {
-      status = 
-      await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+      status = await config.flightSuretyData.isPassengerInsured(
+        passenger,
+        airline,
+        flight,
+        timestamp
+      );
     } catch (error) {}
-    assert.equal(status, false, "Cannot buy insurance with amount less or equal to 0 Ether");
+    assert.equal(
+      status,
+      false,
+      "Cannot buy insurance with amount less or equal to 0 Ether"
+    );
   });
 
   it("(passenger) can buy insurance", async () => {
     // ARRANGE
-    let passenger = accounts[6]
+    let passenger = accounts[6];
     let airline = config.firstAirline;
     let flight = "COST003";
     let timestamp = 10;
@@ -548,14 +601,18 @@ contract("Flight Surety Tests", async (accounts) => {
     try {
       await config.flightSuretyApp.buy(airline, flight, timestamp, {
         from: passenger,
-        value: web3.utils.toWei("0.5", "ether")}
-      );
+        value: web3.utils.toWei("0.5", "ether"),
+      });
     } catch (e) {}
 
     let status;
     try {
-      status = 
-        await config.flightSuretyData.isPassengerInsured(passenger, airline, flight, timestamp);
+      status = await config.flightSuretyData.isPassengerInsured(
+        passenger,
+        airline,
+        flight,
+        timestamp
+      );
     } catch (error) {}
     assert.equal(status, true, "Can buy insurance");
   });
@@ -569,8 +626,100 @@ contract("Flight Surety Tests", async (accounts) => {
     //ACT
     let amount;
     try {
-      amount = web3.utils.fromWei(await config.flightSuretyData.getPassengerInsuranceAmount(passenger, airline, flight, timestamp));
+      amount = web3.utils.fromWei(
+        await config.flightSuretyApp.getPassengerInsuranceAmount(
+          passenger,
+          airline,
+          flight,
+          timestamp
+        )
+      );
     } catch (e) {}
     assert.equal(amount, 0.5, "Can get the passenger insurance amount");
   });
+
+  it("can register oracles", async () => {
+    // ARRANGE
+    let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
+
+    // ACT
+    for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
+      await config.flightSuretyApp.registerOracle({
+        from: accounts[a],
+        value: fee,
+      });
+      let result = await config.flightSuretyApp.getMyIndexes.call({
+        from: accounts[a],
+      });
+      console.log(
+        `Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`
+      );
+    }
+  });
+
+  it("can fetch flight status from registered oracles and process insurance for affected customers", async () => {
+    //ARRANGE
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+
+    await config.flightSuretyApp.fetchFlightStatus.sendTransaction(
+      airline,
+      flight,
+      timestamp
+    );
+
+    //ACT
+    for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
+      // Get oracle information
+      let oracleIndexes = await config.flightSuretyApp.getMyIndexes.call({
+        from: accounts[a],
+      });
+      for (let idx = 0; idx < 3; idx++) {
+        try {
+          response = await config.flightSuretyApp.submitOracleResponse(
+            oracleIndexes[idx],
+            airline,
+            flight,
+            timestamp,
+            STATUS_CODE_LATE_AIRLINE,
+            { from: accounts[a] }
+          );
+        } catch (e) {}
+      }
+    }
+    let status = -1;
+    try {
+      status = (
+        await config.flightSuretyData.fetchFlightStatus(
+          flight,
+          timestamp,
+          airline
+        )
+      ).toNumber();
+    } catch (error) {}
+    assert.equal(
+      status,
+      STATUS_CODE_LATE_AIRLINE,
+      "Cannot fetch flight status from registered oracles."
+    );
+
+    let amount;
+    try {
+      let passenger = accounts[6];
+      amount = web3.utils.fromWei(
+        await config.flightSuretyData.getPassengerReimbursement(
+          airline,
+          flight,
+          timestamp,
+          passenger
+        )
+      );
+    } catch (error) {}
+    assert.equal(amount, 1.5, "Can process insurance for affected customers.");
+  });
+
+  // it("Process insurance for affected customers", async() => {
+
+  // })
 });
