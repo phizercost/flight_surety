@@ -133,18 +133,16 @@ contract FlightSuretyData {
         _;
     }
 
-    // modifier onlyFlightOwner(
-    //     address airline,
-    //     string flight,
-    //     uint256 timestamp
-    // ) {
-    //     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-    //     require(
-    //         flights[flightKey].airline == airline,
-    //         "Only flight owner is allowed to do this"
-    //     );
-    //     _;
-    // }
+    modifier onlyFlightOwner(
+        address airline,
+        bytes32 flightKey
+    ) {
+        require(
+            flights[flightKey].airline == airline,
+            "Only flight owner is allowed to do this"
+        );
+        _;
+    }
 
     modifier requireFlightLate(bytes32 flightKey) {
         require(
@@ -486,7 +484,7 @@ contract FlightSuretyData {
     }
 
     function fetchFlightStatus(bytes32 flightKey)
-        public
+        external
         view
         returns (uint256)
     {
@@ -533,12 +531,19 @@ contract FlightSuretyData {
 
     function fund() public payable requireIsOperational {}
 
-    function getFlightKey(
-        address airline,
-        string flight,
-        uint256 timestamp
-    ) external returns (bytes32) {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
+    // function getFlightKey(
+    //     address airline,
+    //     string flight,
+    //     uint256 timestamp
+    // ) public returns (bytes32) {
+    //     return keccak256(abi.encodePacked(airline, flight, timestamp));
+    // }
+
+    function getFlightStatusCode(
+        bytes32 flightKey
+    ) external returns (uint8) {
+        uint8 statusCode = flights[flightKey].statusCode;
+        return statusCode;
     }
 
     function isPassengerFlightReimbursed(bytes32 flightKey, address passenger)

@@ -82,11 +82,7 @@ contract FlightSuretyApp is FlightSuretyData {
         string flight,
         uint256 timestamp
     ) public view returns (bool) {
-        bytes32 flightKey = flightSuretyData.getFlightKey(
-            airline,
-            flight,
-            timestamp
-        );
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         bool status = flightSuretyData.isFlightRegistered(flightKey);
         return status;
     }
@@ -106,11 +102,7 @@ contract FlightSuretyApp is FlightSuretyData {
      */
 
     function registerFlight(string flight, uint256 timestamp) external {
-        bytes32 flightKey = flightSuretyData.getFlightKey(
-            msg.sender,
-            flight,
-            timestamp
-        );
+        bytes32 flightKey = getFlightKey(msg.sender, flight, timestamp);
         flightSuretyData.registerFlight(
             msg.sender,
             flight,
@@ -130,11 +122,7 @@ contract FlightSuretyApp is FlightSuretyData {
         string flight,
         uint256 timestamp
     ) external payable {
-        bytes32 flightKey = flightSuretyData.getFlightKey(
-            airlineAddress,
-            flight,
-            timestamp
-        );
+        bytes32 flightKey = getFlightKey(airlineAddress, flight, timestamp);
         require(
             flightSuretyData.isAirlineAuthorized(airlineAddress),
             "You can only buy insurance from an authorized airline"
@@ -163,11 +151,7 @@ contract FlightSuretyApp is FlightSuretyData {
         string flight,
         uint256 timestamp
     ) external view returns (uint256) {
-        bytes32 flightKey = flightSuretyData.getFlightKey(
-            airline,
-            flight,
-            timestamp
-        );
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         uint256 amount = flightSuretyData.getPassengerInsuranceAmount(
             passenger,
             flightKey
@@ -186,11 +170,7 @@ contract FlightSuretyApp is FlightSuretyData {
         uint256 timestamp,
         uint8 statusCode
     ) internal {
-        bytes32 flightKey = flightSuretyData.getFlightKey(
-            airline,
-            flight,
-            timestamp
-        );
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         flightSuretyData.updateFlightStatus(statusCode, flightKey);
     }
 
@@ -210,12 +190,8 @@ contract FlightSuretyApp is FlightSuretyData {
             requester: msg.sender,
             isOpen: true
         });
-        bytes32 flightKey = flightSuretyData.getFlightKey(
-            airline,
-            flight,
-            timestamp
-        );
-        flightSuretyData.creditInsurees(flightKey);
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        //flightSuretyData.creditInsurees(flightKey);
 
         emit OracleRequest(index, airline, flight, timestamp);
     }
@@ -349,6 +325,49 @@ contract FlightSuretyApp is FlightSuretyData {
         uint256 timestamp
     ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
+    }
+
+    function updateFlightStatus(
+        string flight,
+        uint256 timestamp,
+        uint8 statusCode,
+        address airline
+    ) external {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        flightSuretyData.updateFlightStatus(statusCode, flightKey);
+    }
+
+    function getFlightStatusCode(
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) external returns (uint8) {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+
+        // uint8 statusCode = flightSuretyData.getFlightStatusCode(flightKey);
+        uint8 statusCode = 3;
+        return statusCode;
+    }
+
+    function fetchFlightStatus(
+        string flight,
+        uint256 timestamp,
+        address airline
+    ) external view returns (uint256) {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        uint256 status = flightSuretyData.fetchFlightStatus(flightKey);
+        return status;
+    }
+
+    function isPassengerInsured(
+        address passenger,
+        address airline,
+        string flight,
+        uint256 timestamp
+    ) public view returns (bool) {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        bool status = isPassengerInsured(passenger, flightKey);
+        return status;
     }
 
     // Returns array of three non-duplicating integers from 0-9
