@@ -490,11 +490,12 @@ contract("Flight Surety Tests", async (accounts) => {
 
     let status;
     try {
-      status = (
-        await config.flightSuretyApp.getFlightStatusCode(
-          airline,flight,timestamp
-        )
-      ).toNumber();
+      // status = (
+      //   await config.flightSuretyApp.getFlightStatusCode(
+      //     airline,flight,timestamp
+      //   )
+      // ).toNumber();
+      status = (await config.flightSuretyApp.getFlightStatusCode(airline,flight,timestamp)).toNumber();
     } catch (error) {
       console.log("STATUS",status)
       console.log("HERE2",error)

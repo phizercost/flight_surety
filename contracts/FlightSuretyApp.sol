@@ -341,11 +341,11 @@ contract FlightSuretyApp is FlightSuretyData {
         address airline,
         string flight,
         uint256 timestamp
-    ) external returns (uint8) {
+    ) external returns (uint256) {
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
 
-        // uint8 statusCode = flightSuretyData.getFlightStatusCode(flightKey);
-        uint8 statusCode = 3;
+        // uint256 statusCode = flightSuretyData.fetchFlightStatus(flightKey);
+        uint256 statusCode = 3;
         return statusCode;
     }
 
