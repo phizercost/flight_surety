@@ -21,6 +21,7 @@
 //   it("can register oracles", async () => {
 //     // ARRANGE
 //     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
+//     console.log("Fee:",web3.utils.fromWei(fee, "ether"));
 
 //     // ACT
 //     for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
@@ -40,7 +41,8 @@
 //   it("can request flight status", async () => {
 //     // ARRANGE
 //     let flight = "COST003"; // Course number
-//     let timestamp = Math.floor(Date.now() / 1000);
+//     let timestamp = 10;//Math.floor(Date.now() / 1000);
+//     console.log("timestamp ", timestamp);
 
 //     // Submit a request for oracles to get status information for a flight
 //     await config.flightSuretyApp.fetchFlightStatus.sendTransaction(
@@ -68,7 +70,7 @@
 //             config.firstAirline,
 //             flight,
 //             timestamp,
-//             STATUS_CODE_ON_TIME,
+//             STATUS_CODE_LATE_TECHNICAL,
 //             { from: accounts[a] }
 //           );
 //         } catch (e) {
@@ -78,7 +80,7 @@
 //             idx,
 //             oracleIndexes[idx].toNumber(),
 //             flight,
-//             timestamp,"\n",e
+//             timestamp,"\n"
 //           );
 //         }
 //       }

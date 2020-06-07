@@ -115,7 +115,7 @@ contract("Flight Surety Tests", async (accounts) => {
     let result = 6;
     try {
       //web3.utils.toWei("15", "ether")
-      let r = await config.flightSuretyData.changeAirlineFundingAmount(
+      let r = await config.flightSuretyData.setAirlineFundingAmount(
         web3.utils.toWei("15", "ether"),
         { from: config.firstAirline }
       );
@@ -134,7 +134,7 @@ contract("Flight Surety Tests", async (accounts) => {
   it(`(owner) can change the registration fees amount if it is the owner`, async () => {
     let result = 0;
     try {
-      await config.flightSuretyData.changeAirlineFundingAmount(
+      await config.flightSuretyData.setAirlineFundingAmount(
         web3.utils.toWei("15", "ether"),
         { from: config.owner }
       );
@@ -149,7 +149,7 @@ contract("Flight Surety Tests", async (accounts) => {
       "Registration fees cannot be changed by someone who is not the owner of the contract"
     );
     try {
-      await config.flightSuretyData.changeAirlineFundingAmount(
+      await config.flightSuretyData.setAirlineFundingAmount(
         web3.utils.toWei("2", "ether"),
         { from: config.owner }
       );
@@ -225,17 +225,13 @@ contract("Flight Surety Tests", async (accounts) => {
         "COSTAIR",
         config.firstAirline
       );
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
 
     try {
       result = await config.flightSuretyData.isAirlineRegistered.call(
         newAirline
       );
-    } catch (error) {
-      console.log(error);
-    }
+    } catch (error) {}
 
     // ASSERT
     assert.equal(
@@ -327,9 +323,7 @@ contract("Flight Surety Tests", async (accounts) => {
         "COSTAIR1",
         registeringAccount1
       );
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
 
     try {
       await config.flightSuretyData.registerAirline(
@@ -338,9 +332,7 @@ contract("Flight Surety Tests", async (accounts) => {
         "COSTAIR2",
         registeringAccount1
       );
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
 
     try {
       await config.flightSuretyData.registerAirline(
@@ -425,14 +417,12 @@ contract("Flight Surety Tests", async (accounts) => {
     let timestamp = 10;
     //ACT
     try {
-      await config.flightSuretyApp.registerFlight(flight, timestamp, {
-        from: airline,
-      });
+      await config.flightSuretyData.registerFlight(airline, flight, timestamp);
     } catch (e) {}
 
     let status;
     try {
-      status = await config.flightSuretyApp.isFlightRegistered(
+      status = await config.flightSuretyData.isFlightRegistered.call(
         airline,
         flight,
         timestamp
@@ -452,14 +442,12 @@ contract("Flight Surety Tests", async (accounts) => {
     let timestamp = 10;
     //ACT
     try {
-      await config.flightSuretyApp.registerFlight(flight, timestamp, {
-        from: airline,
-      });
+      await config.flightSuretyData.registerFlight(airline, flight, timestamp);
     } catch (e) {}
 
     let status;
     try {
-      status = await config.flightSuretyApp.isFlightRegistered(
+      status = await config.flightSuretyData.isFlightRegistered(
         airline,
         flight,
         timestamp
@@ -480,27 +468,25 @@ contract("Flight Surety Tests", async (accounts) => {
     let statusCode = 100;
     //ACT
     try {
-      await config.flightSuretyApp.updateFlightStatus(
+      await config.flightSuretyData.updateFlightStatus(
+        airline,
         flight,
         timestamp,
-        statusCode,
-        airline
+        statusCode
       );
     } catch (e) {}
 
     let status;
     try {
-      // status = (
-      //   await config.flightSuretyApp.getFlightStatusCode(
-      //     airline,flight,timestamp
-      //   )
-      // ).toNumber();
-      status = (await config.flightSuretyApp.getFlightStatusCode(airline,flight,timestamp)).toNumber();
+      status = await config.flightSuretyData.getFlightStatusCode.call(
+        airline,
+        flight,
+        timestamp
+      );
     } catch (error) {
-      console.log("STATUS",status)
-      console.log("HERE2",error)
+      console.log("STATUS", status);
+      console.log("HERE2", error);
     }
-    console.log(status)
     assert.equal(status, 100, "Cannot update flight status code");
   });
 
@@ -520,7 +506,7 @@ contract("Flight Surety Tests", async (accounts) => {
 
     let status;
     try {
-      status = await config.flightSuretyApp.isPassengerInsured(
+      status = await config.flightSuretyData.isPassengerInsured.call(
         passenger,
         airline,
         flight,
@@ -550,7 +536,7 @@ contract("Flight Surety Tests", async (accounts) => {
 
     let status;
     try {
-      status = await config.flightSuretyApp.isPassengerInsured(
+      status = await config.flightSuretyData.isPassengerInsured.call(
         passenger,
         airline,
         flight,
@@ -580,7 +566,7 @@ contract("Flight Surety Tests", async (accounts) => {
 
     let status;
     try {
-      status = await config.flightSuretyApp.isPassengerInsured(
+      status = await config.flightSuretyData.isPassengerInsured.call(
         passenger,
         airline,
         flight,
@@ -604,21 +590,21 @@ contract("Flight Surety Tests", async (accounts) => {
     try {
       await config.flightSuretyApp.buy(airline, flight, timestamp, {
         from: passenger,
-        value: web3.utils.toWei("0.5", "ether"),
+        value: web3.utils.toWei("0.9", "ether"),
       });
-    } catch (e) {}
+    } catch (e) {
+      console.log("HERE1:", e);
+    }
 
     let status;
     try {
-      status = await config.flightSuretyApp.isPassengerInsured(
+      status = await config.flightSuretyData.isPassengerInsured.call(
         passenger,
         airline,
         flight,
         timestamp
       );
-    } catch (error) {
-      console.log(error)
-    }
+    } catch (error) {}
     assert.equal(status, true, "Can buy insurance");
   });
 
@@ -632,7 +618,7 @@ contract("Flight Surety Tests", async (accounts) => {
     let amount;
     try {
       amount = web3.utils.fromWei(
-        await config.flightSuretyApp.getPassengerInsuranceAmount(
+        await config.flightSuretyData.getPassengerInsuranceAmount.call(
           passenger,
           airline,
           flight,
@@ -640,10 +626,10 @@ contract("Flight Surety Tests", async (accounts) => {
         )
       );
     } catch (e) {}
-    assert.equal(amount, 0.5, "Can get the passenger insurance amount");
+    assert.equal(amount, 0.9, "Cannot get the passenger insurance amount");
   });
 
-  it("can register oracles", async () => {
+  it("(contract)can register oracles", async () => {
     // ARRANGE
     let fee = await config.flightSuretyApp.REGISTRATION_FEE.call();
 
@@ -662,65 +648,143 @@ contract("Flight Surety Tests", async (accounts) => {
     }
   });
 
-  // it("can fetch flight status from registered oracles and process insurance for affected customers", async () => {
-  //   //ARRANGE
-  //   let airline = config.firstAirline;
-  //   let flight = "COST003";
-  //   let timestamp = 10;
+  it("(contract)can request flight status", async () => {
+    // ARRANGE
+    let flight = "COST003"; // Course number
+    let timestamp = 10; //Math.floor(Date.now() / 1000);
+    console.log("timestamp ", timestamp);
+    let requestIndex;
 
-  //   await config.flightSuretyApp.fetchFlightStatus.sendTransaction(
-  //     airline,flight,timestamp
-  //   );
+    // Submit a request for oracles to get status information for a flight
+    await config.flightSuretyApp.fetchFlightStatus.sendTransaction(
+      config.firstAirline,
+      flight,
+      timestamp
+    );
 
-  //   //ACT
-  //   for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
-  //     // Get oracle information
-  //     let oracleIndexes = await config.flightSuretyApp.getMyIndexes.call({
-  //       from: accounts[a],
-  //     });
-  //     for (let idx = 0; idx < 3; idx++) {
-  //       try {
-  //         response = await config.flightSuretyApp.submitOracleResponse(
-  //           oracleIndexes[idx],
-  //           airline,
-  //           flight,
-  //           timestamp,
-  //           STATUS_CODE_LATE_AIRLINE,
-  //           { from: accounts[a] }
-  //         );
-  //       } catch (e) {}
-  //     }
-  //   }
-  //   let status = -1;
-  //   try {
-  //     status = (
-  //       await config.flightSuretyApp.fetchFlightStatus(
-  //        airline,flight,timestamp
-  //       )
-  //     ).toNumber();
-  //   } catch (error) {}
-  //   assert.equal(
-  //     status,
-  //     STATUS_CODE_LATE_AIRLINE,
-  //     "Cannot fetch flight status from registered oracles."
-  //   );
+    // ACT
 
-  //   let amount;
-  //   try {
-  //     let passenger = accounts[6];
-  //     amount = web3.utils.fromWei(
-  //       await config.flightSuretyData.getPassengerReimbursement(
-  //         airline,
-  //         flight,
-  //         timestamp,
-  //         passenger
-  //       )
-  //     );
-  //   } catch (error) {}
-  //   assert.equal(amount, 1.5, "Can process insurance for affected customers.");
-  // });
+    // Since the Index assigned to each test account is opaque by design
+    // loop through all the accounts and for each account, all its Indexes (indices?)
+    // and submit a response. The contract will reject a submission if it was
+    // not requested so while sub-optimal, it's a good test of that feature
 
-  // it("Process insurance for affected customers", async() => {
+    for (let a = 1; a < TEST_ORACLES_COUNT; a++) {
+      // Get oracle information
+      let oracleIndexes = await config.flightSuretyApp.getMyIndexes.call({
+        from: accounts[a],
+      });
+      for (let idx = 0; idx < 3; idx++) {
+        try {
+          // Submit a response...it will only be accepted if there is an Index match
+          await config.flightSuretyApp.submitOracleResponse(
+            oracleIndexes[idx],
+            config.firstAirline,
+            flight,
+            timestamp,
+            STATUS_CODE_LATE_AIRLINE,
+            {
+              from: accounts[a],
+            }
+          );
+          console.log(
+            `[${a}]`,
+            "\nSuccess",
+            idx,
+            oracleIndexes[idx].toNumber(),
+            config.firstAirline,
+            flight,
+            timestamp
+          );
+        } catch (e) {
+          // Enable this when debugging
+          console.log(
+            "\nError",
+            idx,
+            oracleIndexes[idx].toNumber(),
+            flight,
+            timestamp
+          );
+        }
+      }
+    }
+  });
 
-  // })
+  it("(contract)can credit insurees of 1.5X the amount they paid", async () => {
+    let passenger = accounts[6];
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+
+    let amount;
+    try {
+      amount = web3.utils.fromWei(
+        await config.flightSuretyData.getPassengerReimbursement.call(
+          airline,
+          flight,
+          timestamp,
+          passenger
+        )
+      );
+    } catch (error) {}
+    assert.equal(
+      amount,
+      1.35,
+      "Cannot credit insurees of 1.5X the amount they paid"
+    );
+  });
+
+  it("(passenger) can withdraw the credited insurance", async () => {
+    let passenger = accounts[6];
+    let airline = config.firstAirline;
+    let flight = "COST003";
+    let timestamp = 10;
+    let amountBefore, amountAfter, balanceBefore, balanceAfter, etherBalanceBefore, etherBalanceAfter;
+
+    try {
+      balanceBefore = await web3.eth.getBalance(passenger);
+      etherBalanceBefore = web3.utils.fromWei(balanceBefore);
+      console.log("BALANCE BEFORE: ", etherBalanceBefore);
+
+      amountBefore = web3.utils.fromWei(
+        await config.flightSuretyData.getPassengerReimbursement.call(
+          airline,
+          flight,
+          timestamp,
+          passenger
+        )
+      );
+
+      await config.flightSuretyData.pay(airline, flight, timestamp, {
+        from: passenger,
+      });
+
+      amountAfter = web3.utils.fromWei(
+        await config.flightSuretyData.getPassengerReimbursement.call(
+          airline,
+          flight,
+          timestamp,
+          passenger
+        )
+      );
+
+      balanceAfter = await web3.eth.getBalance(passenger);
+      etherBalanceAfter = web3.utils.fromWei(balanceAfter);
+      console.log("BALANCE AFTER: ", etherBalanceAfter);
+    } catch (error) {
+      console.log(error);
+    }
+
+    let difference = Math.round(Math.round(etherBalanceAfter * 100) - Math.round(etherBalanceBefore * 100))/100;
+    assert.equal(
+      difference,
+      amountBefore,
+      "Balance after is not equal to balance before plus insurance"
+    );
+    assert.equal(
+      amountAfter,
+      0,
+      "Reimbursement amount is not set to zero after withdraw"
+    );
+  });
 });
