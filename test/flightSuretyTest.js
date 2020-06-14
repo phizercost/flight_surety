@@ -17,35 +17,6 @@ contract("Flight Surety Tests", async (accounts) => {
     await config.flightSuretyData.authorizeCaller(
       config.flightSuretyApp.address
     );
-
-    try {
-      //Fund the first airline
-      await config.flightSuretyData.fundAirline(config.firstAirline, {
-        from: config.firstAirline,
-        value: web3.utils.toWei("2", "ether"),
-      });
-    } catch (error) {}
-    //Register the first airline
-    try {
-      await config.flightSuretyData.registerAirline(
-        config.firstAirline,
-        "FIRST",
-        "FIRST AIRLINE",
-        config.firstAirline
-      );
-    } catch (e) {}
-
-    try {
-      //Authorize the first airline
-      await config.flightSuretyData.authorizeAirline(config.firstAirline);
-    } catch (error) {}
-
-    //Register first airline
-    //await config.flightSuretyApp.registerAirline(config.firstAirline);
-
-    // //Authorize first airline
-
-    // await config.flightSuretyApp.authorizeAirline(config.firstAirline);
   });
 
   /****************************************************************************************/
@@ -101,14 +72,34 @@ contract("Flight Surety Tests", async (accounts) => {
     await config.flightSuretyData.setOperatingStatus(true);
   });
 
+  it(`(multiparty) can register the first Airline when the contract is deployed`, async () => {
+    let registered = false;
+    try {
+      registered = await config.flightSuretyData.isAirlineRegistered(
+        config.firstAirline
+      );
+    } catch (error) {
+      
+    }
+    assert.equal(registered, true, "Airline is registered");
+  })
+
   it(`(multiparty) check if airline has paid registration fees`, async () => {
     let funded = false;
+
+    try {
+      //Fund the first airline
+      await config.flightSuretyData.fundAirline(config.firstAirline, {
+        from: config.firstAirline,
+        value: web3.utils.toWei("2", "ether"),
+      });
+    } catch (error) {}
     try {
       funded = await config.flightSuretyData.isAirlineFunded(
         config.firstAirline
       );
     } catch (error) {}
-    assert.equal(funded, true, "Airline is funded");
+    assert.equal(funded, true, "Airline is not funded");
   });
 
   it(`(owner) cannot change the registration fees amount if it is not the owner`, async () => {
@@ -173,7 +164,7 @@ contract("Flight Surety Tests", async (accounts) => {
 
     // ACT
     try {
-      await config.flightSuretyApp.fundAirline(newAirline, {
+      await config.flightSuretyData.fundAirline(newAirline, {
         from: newAirline,
         value: 4,
       });
@@ -222,8 +213,7 @@ contract("Flight Surety Tests", async (accounts) => {
       await config.flightSuretyData.registerAirline(
         newAirline,
         "COST",
-        "COSTAIR",
-        config.firstAirline
+        "COSTAIR"
       );
     } catch (e) {}
 
@@ -258,47 +248,6 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(result.code, "COST", "Should be able to get the airline code");
   });
 
-  it("(airline) cannot vote if it is not an authorized airline", async () => {
-    // ARRANGE
-    let votingAirline = accounts[3];
-    let candidateAirline = accounts[2];
-    //ACT
-    try {
-      await config.flightSuretyData.voteAirline(
-        votingAirline,
-        candidateAirline
-      );
-    } catch (e) {}
-    let votes;
-    try {
-      votes = (
-        await config.flightSuretyData.getAirlineVoteCount(candidateAirline)
-      ).toNumber();
-    } catch (error) {}
-    assert.equal(votes, 0, "Cannot vote if not authorized");
-  });
-
-  it("(airline) can vote if it is an authorized airline", async () => {
-    // ARRANGE
-    let votingAirline = config.firstAirline;
-    let candidateAirline = accounts[2];
-    //ACT
-    try {
-      await config.flightSuretyData.voteAirline(
-        votingAirline,
-        candidateAirline
-      );
-    } catch (e) {}
-
-    let votes;
-    try {
-      votes = (
-        await config.flightSuretyData.getAirlineVoteCount(candidateAirline)
-      ).toNumber();
-    } catch (error) {}
-    assert.equal(votes, 1, "Can vote if authorized");
-  });
-
   it("(airline) is authorized if is funded and count of airlines is less than required for voting", async () => {
     let newAirline = accounts[2];
     let result;
@@ -308,39 +257,14 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(result, true, "airline is authorized");
   });
 
-  it("(airline) is not authorized if is funded and count of airlines is greater than required for voting", async () => {
-    let registeringAccount1 = accounts[2];
+  it("(airline) is not authorized if is funded or registered and count of airlines is greater than required for voting", async () => {
+    let registeringAccount1 = config.firstAirline;
     let newAirline1 = accounts[3];
     let newAirline2 = accounts[4];
     let newAirline3 = accounts[5];
-    let result1, result2, result3;
+    //let newAirline4 = accounts[6];
+    let result1, result2, result3, result4;
 
-    // ACT
-    try {
-      await config.flightSuretyData.registerAirline(
-        newAirline1,
-        "COST1",
-        "COSTAIR1",
-        registeringAccount1
-      );
-    } catch (e) {}
-
-    try {
-      await config.flightSuretyData.registerAirline(
-        newAirline2,
-        "COST2",
-        "COSTAIR2",
-        registeringAccount1
-      );
-    } catch (e) {}
-
-    try {
-      await config.flightSuretyData.registerAirline(
-        newAirline3,
-        "COST3",
-        "COSTAIR3"
-      );
-    } catch (e) {}
 
     try {
       await config.flightSuretyData.fundAirline(newAirline1, {
@@ -362,6 +286,48 @@ contract("Flight Surety Tests", async (accounts) => {
       });
     } catch (error) {}
 
+    // try {
+    //   await config.flightSuretyData.fundAirline(newAirline4, {
+    //     from: newAirline4,
+    //     value: web3.utils.toWei("2", "ether"),
+    //   });
+    // } catch (error) {}
+
+    // ACT
+    try {
+      await config.flightSuretyData.registerAirline(
+        newAirline1,
+        "COST1",
+        "COSTAIR1",{from:registeringAccount1}
+      );
+    } catch (e) {}
+
+    try {
+      await config.flightSuretyData.registerAirline(
+        newAirline2,
+        "COST2",
+        "COSTAIR2",{from:registeringAccount1}
+      );
+    } catch (e) {}
+
+    try {
+      await config.flightSuretyData.registerAirline(
+        newAirline3,
+        "COST3",
+        "COSTAIR3"
+      );
+    } catch (e) {}
+
+    // try {
+    //   await config.flightSuretyData.registerAirline(
+    //     newAirline4,
+    //     "COST4",
+    //     "COSTAIR4"
+    //   );
+    // } catch (e) {}
+
+    
+
     try {
       result1 = await config.flightSuretyData.isAirlineAuthorized(newAirline1);
     } catch (error) {}
@@ -374,48 +340,137 @@ contract("Flight Surety Tests", async (accounts) => {
       result3 = await config.flightSuretyData.isAirlineAuthorized(newAirline3);
     } catch (error) {}
 
+    // try {
+    //   result4 = await config.flightSuretyData.isAirlineAuthorized(newAirline4);
+    // } catch (error) {}
+
     assert.equal(result1, true, "airline1 is authorized");
     assert.equal(result2, true, "airline2 is authorized");
-    assert.equal(result3, false, "airline3 is not authorized");
+    assert.equal(result3, false, "airline3 is authorized");
+    //assert.equal(result4, false, "airline4 is not authorized");
+
+  });
+
+
+  it("(airline) cannot vote if it is not an authorized airline", async () => {
+    // ARRANGE
+    let votingAirline = accounts[6];
+    let candidateAirline = accounts[5];
+    //ACT
+    try {
+      await config.flightSuretyData.voteAirline(
+        votingAirline,
+        candidateAirline
+      );
+    } catch (e) {}
+    let votes;
+    try {
+      votes = (
+        await config.flightSuretyData.getAirlineVoteCount(candidateAirline)
+      ).toNumber();
+    } catch (error) {}
+    assert.equal(votes, 0, "Cannot vote if not authorized");
+  });
+
+  it("(airline) can vote if it is an authorized airline", async () => {
+    // ARRANGE
+    let votingAirline = accounts[4];
+    let candidateAirline = accounts[5];
+
+    // ACT
+    try {
+      await config.flightSuretyData.registerAirline(
+        candidateAirline,
+        "RWANDAIR",
+        "RWA"
+      );
+    } catch (e) {}
+    //ACT
+    try {
+      await config.flightSuretyData.voteAirline(
+        votingAirline,
+        candidateAirline
+      );
+    } catch (e) {
+    }
+
+    let votes;
+    try {
+      votes = (
+        await config.flightSuretyData.getAirlineVoteCount(candidateAirline)
+      ).toNumber();
+    } catch (error) {}
+    assert.equal(votes, 1, "Cannot vote if authorized");
+  });
+
+  it("(airline) cannot vote twice", async () => {
+    // ARRANGE
+    let votingAirline = accounts[4];
+    let candidateAirline = accounts[5];
+    //ACT
+    try {
+      await config.flightSuretyData.voteAirline(
+        votingAirline,
+        candidateAirline
+      );
+    } catch (e) {
+    }
+
+    let votes;
+    try {
+      votes = (
+        await config.flightSuretyData.getAirlineVoteCount(candidateAirline)
+      ).toNumber();
+    } catch (error) {}
+    assert.equal(votes, 1, "Can vote twice");
   });
 
   it("(airline) is authorized if is funded and has collected enough votes", async () => {
-    let votingAirline1 = accounts[2];
-    let votingAirline2 = accounts[3];
-
-    let newAirline = accounts[5];
+    let votingAirline = accounts[3];
+    let candidateAirline = accounts[5];
     let result;
+
     try {
-      await config.flightSuretyData.registerAirline(
-        newAirline,
-        "COST3",
-        "COSTAIR3"
-      );
-    } catch (e) {}
-    try {
-      result = await config.flightSuretyData.isAirlineAuthorized(newAirline);
+      result = await config.flightSuretyData.isAirlineAuthorized(candidateAirline);
     } catch (error) {}
     assert.equal(result, false, "airline is not authorized");
 
     try {
-      await config.flightSuretyData.voteAirline(votingAirline1, newAirline);
+      await config.flightSuretyData.voteAirline(votingAirline, candidateAirline);
     } catch (e) {}
 
     try {
-      await config.flightSuretyData.voteAirline(votingAirline2, newAirline);
-    } catch (e) {}
-    try {
-      result = await config.flightSuretyData.isAirlineAuthorized(newAirline);
+      result = await config.flightSuretyData.isAirlineAuthorized(candidateAirline);
     } catch (error) {}
     assert.equal(result, true, "airline is authorized");
   });
 
   it("(airline) cannot register flight if airline is not authorized", async () => {
     // ARRANGE
+    let registeringAirline = accounts[5];
     let airline = accounts[6];
-    let flight = "COST003";
+    let flight = "KQ100";
     let timestamp = 10;
     //ACT
+
+    try {
+      await config.flightSuretyData.fundAirline(airline, {
+        from: airline,
+        value: web3.utils.toWei("2", "ether"),
+      });
+    } catch (e) {}
+
+    // ACT
+    try {
+      await config.flightSuretyData.registerAirline(
+        airline,
+        "KENYA AIRWAYS",
+        "KQ",{from:registeringAirline}
+      );
+    } catch (e) {}
+
+
+
     try {
       await config.flightSuretyData.registerFlight(airline, flight, timestamp);
     } catch (e) {}
@@ -431,23 +486,39 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(
       status,
       false,
-      "Cannot register flight if the airline is not authorized"
+      "Can register flight if the airline is not authorized"
     );
   });
 
   it("(airline) can register flight if airline is authorized", async () => {
     // ARRANGE
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let votingAirline1 = accounts[4];
+    let votingAirline2 = accounts[3];
+    let votingAirline3 = accounts[2];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     //ACT
+
+    try {
+      await config.flightSuretyData.voteAirline(votingAirline1, airline);
+    } catch (e) {}
+
+    try {
+      await config.flightSuretyData.voteAirline(votingAirline2, airline);
+    } catch (e) {}
+
+    try {
+      await config.flightSuretyData.voteAirline(votingAirline3, airline);
+    } catch (e) {}
+
     try {
       await config.flightSuretyData.registerFlight(airline, flight, timestamp);
     } catch (e) {}
 
     let status;
     try {
-      status = await config.flightSuretyData.isFlightRegistered(
+      status = await config.flightSuretyData.isFlightRegistered.call(
         airline,
         flight,
         timestamp
@@ -456,14 +527,14 @@ contract("Flight Surety Tests", async (accounts) => {
     assert.equal(
       status,
       true,
-      "Can register flight if the airline is authorized"
+      "Cannot register flight if the airline is authorized"
     );
   });
 
   it("(airline) can update flight status code", async () => {
     // ARRANGE
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     let statusCode = 100;
     //ACT
@@ -484,15 +555,15 @@ contract("Flight Surety Tests", async (accounts) => {
         timestamp
       );
     } catch (error) {
-      console.log("STATUS", status);
-      console.log("HERE2", error);
     }
     assert.equal(status, 100, "Cannot update flight status code");
+
+
   });
 
   it("(passenger) cannot buy insurance for a non registered flight", async () => {
     // ARRANGE
-    let passenger = accounts[6];
+    let passenger = accounts[7];
     let airline = config.firstAirline;
     let flight = "COST002";
     let timestamp = 1;
@@ -522,9 +593,9 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(passenger) cannot buy insurance with amount greater than 1 Ether", async () => {
     // ARRANGE
-    let passenger = accounts[6];
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let passenger = accounts[7];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     //ACT
     try {
@@ -552,9 +623,9 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(passenger) cannot buy insurance with amount less or equal to 0 Ether", async () => {
     // ARRANGE
-    let passenger = accounts[6];
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let passenger = accounts[7];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     //ACT
     try {
@@ -582,18 +653,18 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(passenger) can buy insurance", async () => {
     // ARRANGE
-    let passenger = accounts[6];
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let passenger = accounts[7];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     //ACT
     try {
       await config.flightSuretyApp.buy(airline, flight, timestamp, {
         from: passenger,
-        value: web3.utils.toWei("0.9", "ether"),
+        value: web3.utils.toWei("0.5", "ether"),
       });
     } catch (e) {
-      console.log("HERE1:", e);
+      console.log(e)
     }
 
     let status;
@@ -610,9 +681,9 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(passenger) can get the passenger paid insurance amount", async () => {
     // ARRANGE
-    let passenger = accounts[6];
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let passenger = accounts[7];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     //ACT
     let amount;
@@ -626,7 +697,7 @@ contract("Flight Surety Tests", async (accounts) => {
         )
       );
     } catch (e) {}
-    assert.equal(amount, 0.9, "Cannot get the passenger insurance amount");
+    assert.equal(amount, 0.5, "Cannot get the passenger insurance amount");
   });
 
   it("(contract)can register oracles", async () => {
@@ -650,14 +721,14 @@ contract("Flight Surety Tests", async (accounts) => {
 
   it("(contract)can request flight status", async () => {
     // ARRANGE
-    let flight = "COST003"; // Course number
+    let flight = "KQ100"; // Course number
     let timestamp = 10; //Math.floor(Date.now() / 1000);
     console.log("timestamp ", timestamp);
     let requestIndex;
 
     // Submit a request for oracles to get status information for a flight
     await config.flightSuretyApp.fetchFlightStatus.sendTransaction(
-      config.firstAirline,
+      accounts[6],
       flight,
       timestamp
     );
@@ -679,7 +750,7 @@ contract("Flight Surety Tests", async (accounts) => {
           // Submit a response...it will only be accepted if there is an Index match
           await config.flightSuretyApp.submitOracleResponse(
             oracleIndexes[idx],
-            config.firstAirline,
+            accounts[6],
             flight,
             timestamp,
             STATUS_CODE_LATE_AIRLINE,
@@ -692,7 +763,7 @@ contract("Flight Surety Tests", async (accounts) => {
             "\nSuccess",
             idx,
             oracleIndexes[idx].toNumber(),
-            config.firstAirline,
+            accounts[6],
             flight,
             timestamp
           );
@@ -711,9 +782,9 @@ contract("Flight Surety Tests", async (accounts) => {
   });
 
   it("(contract)can credit insurees of 1.5X the amount they paid", async () => {
-    let passenger = accounts[6];
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let passenger = accounts[7];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
 
     let amount;
@@ -729,15 +800,15 @@ contract("Flight Surety Tests", async (accounts) => {
     } catch (error) {}
     assert.equal(
       amount,
-      1.35,
+      0.75,
       "Cannot credit insurees of 1.5X the amount they paid"
     );
   });
 
   it("(passenger) can withdraw the credited insurance", async () => {
-    let passenger = accounts[6];
-    let airline = config.firstAirline;
-    let flight = "COST003";
+    let passenger = accounts[7];
+    let airline = accounts[6];
+    let flight = "KQ100";
     let timestamp = 10;
     let amountBefore, amountAfter, balanceBefore, balanceAfter, etherBalanceBefore, etherBalanceAfter;
 
@@ -775,7 +846,7 @@ contract("Flight Surety Tests", async (accounts) => {
       console.log(error);
     }
 
-    let difference = Math.round(Math.round(etherBalanceAfter * 100) - Math.round(etherBalanceBefore * 100))/100;
+    let difference = Math.ceil(Math.ceil(etherBalanceAfter * 100) - Math.ceil(etherBalanceBefore * 100))/100;
     assert.equal(
       difference,
       amountBefore,

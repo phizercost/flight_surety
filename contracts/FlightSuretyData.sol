@@ -76,10 +76,11 @@ contract FlightSuretyData {
      * @dev Constructor
      *      The deploying account becomes contractOwner
      */
-    constructor() public {
+    constructor(address firstAirline, string memory firstAirlineName, string memory firstAirlineCode) public {
         contractOwner = msg.sender;
         authorizedAppContracts[contractOwner] = true;
         airlineFundingAmount = 2 ether;
+        registerAirline(firstAirline, firstAirlineCode, firstAirlineName);
     }
 
     /********************************************************************************************/
@@ -194,6 +195,14 @@ contract FlightSuretyData {
         emit DeAuthorizedContractCaller(appContract);
     }
 
+    function isContractOwner() internal view returns (bool) {
+        if (msg.sender == contractOwner) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     function _fundAirline(address airlineAddress) internal {
         fundedAirlines.addAirlineToState(airlineAddress);
         emit AirlineFunded(airlineAddress);
@@ -269,7 +278,7 @@ contract FlightSuretyData {
         }
     }
 
-    function getAuthorizedAirlineCount() internal view returns (uint256) {
+    function getAuthorizedAirlineCount() public view returns (uint256) {
         return authorizedAirlinesArray.length;
     }
 
@@ -472,10 +481,12 @@ contract FlightSuretyData {
         string memory airlineCode,
         string memory airlineName
     ) public requireIsOperational() {
-        require(
-            getAuthorizedAirlineCount() >= 4,
-            "Register directly only if there is at least 4 authorized airlines to vote"
-        );
+        if (getAuthorizedAirlineCount() < 4) {
+            require(
+                isContractOwner() || isAirlineAuthorized(msg.sender),
+                "Register another airline only if there is less than 4 authorized airlines"
+            );
+        }
         Airline memory _airline = Airline({
             name: airlineName,
             code: airlineCode,
@@ -486,33 +497,18 @@ contract FlightSuretyData {
 
         airlines[_airline.airlineAddress] = _airline;
         _registerAirline(airlineToRegister);
-    }
 
-    function registerAirline(
-        address airlineToRegister,
-        string memory airlineCode,
-        string memory airlineName,
-        address airlineRegistering
-    ) public requireIsOperational() {
-        require(
-            getAuthorizedAirlineCount() < 4,
-            "Register another airline only if there is less than 4 authorized airlines"
-        );
-        require(
-            isAirlineAuthorized(airlineRegistering) ||
-                getAuthorizedAirlineCount() == 0,
-            "Only authorized airlines or first ever airline"
-        );
-        Airline memory _airline = Airline({
-            name: airlineName,
-            code: airlineCode,
-            votes: 0,
-            funds: 0,
-            airlineAddress: airlineToRegister
-        });
-
-        airlines[_airline.airlineAddress] = _airline;
-        _registerAirline(airlineToRegister);
+        if (isAirlineFunded(_airline.airlineAddress)) {
+            uint256 airlineCount = getAuthorizedAirlineCount();
+            if (airlineCount < 4) {
+                authorizeAirline(_airline.airlineAddress);
+            } else {
+                uint256 totalVotes = getAirlineVoteCount(_airline.airlineAddress);
+                if (totalVotes >= airlineCount / 2) {
+                    authorizeAirline(_airline.airlineAddress);
+                }
+            }
+        }
     }
 
     function voteAirline(address votingAirline, address candidateAirline)
@@ -545,7 +541,7 @@ contract FlightSuretyData {
     }
 
     function authorizeAirline(address airlineAddress)
-        public
+        internal
         requireIsOperational
         onlyRegisteredAirlines(airlineAddress)
     {

@@ -1,33 +1,310 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <title>FlightSurety</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-</head>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
 
-<body>
+    
 
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+  </head>
+
+  <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <a class="navbar-brand" href="#">FlightSurety</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
-            aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
         </button>
-    </nav>
+      
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  Contract
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="#">Status</a>
+                  <a class="dropdown-item" href="#">Airlines Stats</a>
+                </div>
+              </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                Airlines
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="#">Airline Registration</a>
+                <a class="dropdown-item" href="#">Airline Funding</a>
+                <a class="dropdown-item" href="#">Airline Details</a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  Flights
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="#">Flight Registration</a>
+                  <a class="dropdown-item" href="#">Flight Status</a>
+                </div>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  Insurances
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <a class="dropdown-item" href="#">Insurance Purchase</a>
+                  <a class="dropdown-item" href="#">Payment Details</a>
+                  <a class="dropdown-item" href="#">Withdraw</a>
+                </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+   
 
-    <main class="container">
+    
+    <div class="container" id="contract-div" style="display: none">
+        <h3>Operational Status</h3>
+        <div class="col-12">
+            <table>
+                <tr>
+                    <td><label class="form">Flight Surety Contract status</label></td>
+                    <td><input type="button" class="btn btn-secondary" id="operational-status-get" value="Check Status"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
 
+    <div class="container" id="contract-airline-stats-div" style="display: none">
+        <h3>Airlines Stats</h3>
+        <div class="col-12">
+            <table>
+                <tr>
+                    <td><label class="form">Authorized Airlines</label></td>
+                    <td><input type="button" class="btn btn-secondary" id="registered-airlines-get" value="Get Number"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="container" id="airline-funding-div" style="display: none">
+        <h3>Airline Funding</h3>
+        <div class="col-12">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td><input type="text" id="airline-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Amount</label></td>
+                    <td><input type="number" id="amount"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td> <btn class="btn btn-secondary" id="fund-airline">Fund Airline</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="container" id="airline-registration-div" style="display: none">
+        <h3>Airline Registration</h3>
+        <div class="col-12">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td> <input type="text" id="airline-reg-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Registering Airline Address</label></td>
+                    <td> <input type="text" id="airline-registering-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Airline Name</label></td>
+                    <td><input type="text" id="airline-reg-name"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Airline Code</label></td>
+                    <td><input type="text" id="airline-reg-code"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="register-airline">Register Airline</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="container" id="flight-registration-div" style="display: none">
+        <h3>Flight Registration</h3>
+        <div class="row top-20">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td> <input type="text" id="airline-flight-reg-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Flight Code</label></td>
+                    <td><input type="text" id="airline-flight-reg-code"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Timestamp</label></td>
+                    <td><input type="number" id="airline-flight-reg-timestamp"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="register-airline-flight">Register Flight</btn></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="register-airline-flight-status">Is Flight Registered</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="container" id="airline-details-div" style="display: none">
+        <h3>Airline Details</h3>
+        <div class="col-12">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td><input type="text" id="airline-det-address" size = "50"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="get-airline-details">Get Airline Details</btn></td>
+                </tr>
+            </table>
+                      
+                    
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="insurance-purchase-div" style="display: none">
+        <h3>Insurance purchase</h3>
+        <div class="row top-20">
+            <table>
+                <tr>
+                    <td><label class="form">Passenger Address</label></td>
+                    <td> <input type="text" id="airline-insurance-passenger-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td> <input type="text" id="airline-insurance-buy-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Flight Code</label></td>
+                    <td><input type="text" id="airline-insurance-buy-code"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Timestamp</label></td>
+                    <td><input type="number" id="airline-insurance-buy-timestamp"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Amount</label></td>
+                    <td><input type="number" id="airline-insurance-buy-amount"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="buy-insurance">Buy Insurance</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="container" id="flight-div" style="display: none">
+        <h3>Fetch flight status</h3>
+        <div class="row top-20">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td> <input type="text" id="airline-flight-status-address" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Flight Code</label></td>
+                    <td><input type="text" id="airline-flight-status-code"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Timestamp</label></td>
+                    <td><input type="number" id="airline-fligh-status-timestamp"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="submit-oracle">Submit to Oracles</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="container" id="payment-details-div" style="display: none">
+        <h3>Payment Details</h3>
+        <div class="row top-20">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td> <input type="text" id="airline-address-payment" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Passenger Address</label></td>
+                    <td><input type="text" id="passenger-address-payment" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Flight Code</label></td>
+                    <td><input type="text" id="flight-code-payment"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Timestamp</label></td>
+                    <td><input type="number" id="flight-timestamp-payment"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="get-payment-details">Get Details</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="container" id="withdraw-div" style="display: none">
+        <h3>Withdraw</h3>
+        <div class="row top-20">
+            <table>
+                <tr>
+                    <td><label class="form">Airline Address</label></td>
+                    <td> <input type="text" id="airline-address-withdraw" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Passenger Address</label></td>
+                    <td><input type="text" id="passenger-address-withdraw" size="50"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Flight Code</label></td>
+                    <td><input type="text" id="flight-code-withdraw"></td>
+                </tr>
+                <tr>
+                    <td><label class="form">Timestamp</label></td>
+                    <td><input type="number" id="flight-timestamp-withdraw"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><btn class="btn btn-secondary" id="get-withdraw">Withdraw</btn></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="container" id="container-shower" style="display: none;">
         <div id="display-wrapper" class="top-20">
         </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
-        </div>
-    </main>
+    </div>
 
-</body>
-
+    
+  </body>
 </html>

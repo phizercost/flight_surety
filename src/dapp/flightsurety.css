@@ -5,11 +5,11 @@ body {
 }
 
 .container {
-    margin-top: 400px;
+    margin-top: 80px;
     background-color: #000;
     opacity: 0.9;
     color: #fff;
-    padding: 40px;
+    padding: 20px 40px 20px 40px;
 }
 
 .top-20 {
@@ -25,7 +25,7 @@ section {
 }
 
 .field {
-    font-weight: bold;
+    /* font-weight: bold; */
     text-align: right;
 }
 
@@ -38,5 +38,10 @@ label.form {
     margin-right: 20px;
 }
 input {
-    margin-right: 30px;
+    background-color:white; 
+    color: black;
+    border: solid 1px #6E6E6E;
+    height: 30px; 
+    font-size:18px; 
+    vertical-align:9px;
 }

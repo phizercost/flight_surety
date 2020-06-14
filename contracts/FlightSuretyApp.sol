@@ -11,7 +11,7 @@ import "./FlightSuretyData.sol";
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
-contract FlightSuretyApp is FlightSuretyData {
+contract FlightSuretyApp {
     // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
 
     /********************************************************************************************/
@@ -42,19 +42,19 @@ contract FlightSuretyApp is FlightSuretyData {
      *      This is used on all state changing functions to pause the contract in
      *      the event there is an issue that needs to be fixed
      */
-    modifier requireIsOperational() {
-        // Modify to call data contract's status
-        require(true, "Contract is currently not operational");
-        _; // All modifiers require an "_" which indicates where the function body will be added
-    }
+    // modifier requireIsOperational() {
+    //     // Modify to call data contract's status
+    //     require(true, "Contract is currently not operational");
+    //     _; // All modifiers require an "_" which indicates where the function body will be added
+    // }
 
-    /**
-     * @dev Modifier that requires the "ContractOwner" account to be the function caller
-     */
-    modifier requireContractOwner() {
-        require(msg.sender == contractOwner, "Caller is not contract owner");
-        _;
-    }
+    // /**
+    //  * @dev Modifier that requires the "ContractOwner" account to be the function caller
+    //  */
+    // modifier requireContractOwner() {
+    //     require(msg.sender == contractOwner, "Caller is not contract owner");
+    //     _;
+    // }
 
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
@@ -102,7 +102,6 @@ contract FlightSuretyApp is FlightSuretyData {
             msg.value > 0 ether && msg.value <= 1 ether,
             "Insurance amount should be between 0 and 1 Ether"
         );
-        //insurances[msg.sender] = Insurance({ insuredPassenger:msg.sender, amount:msg.value});
         flightSuretyData.registerFunds(
             msg.sender,
             airlineAddress,
