@@ -27,8 +27,8 @@ npm run server
 
 ## Version
 
-Truffle v5.0.5 (core: 5.0.5)
-Solidity - ^0.5.0 (solc-js)
+Truffle v5.0.5 (core: 5.0.5) \n
+Solidity - ^0.5.0 (solc-js) \n
 Node v12.16.1
 
 
