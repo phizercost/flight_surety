@@ -6,7 +6,12 @@ Dapp interacting with Oracles for getting Airline flight status and process flig
 
 ## Installation
 
-npm install truffle compile
+npm install 
+truffle compile
+
+## Migration
+
+truffle migrate
 
 ## Tests
 
